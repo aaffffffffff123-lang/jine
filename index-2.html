@@ -1,0 +1,1727 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>지네 못 걷기</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { height:100%; overflow:hidden; background:#dcecf5; }
+  body { font-family:"Apple SD Gothic Neo","Malgun Gothic",sans-serif; user-select:none; touch-action:none; }
+  #cv { position:fixed; inset:0; display:block; width:100%; height:100%; }
+
+  #top { position:fixed; top:0; left:0; right:0; z-index:5; pointer-events:none;
+         padding:10px 12px; display:flex; flex-direction:column; gap:7px; align-items:center; }
+  #hudrow { width:100%; display:flex; align-items:flex-end; justify-content:space-between; }
+  #distwrap { display:flex; align-items:baseline; }
+  #dist { font-size:32px; font-weight:800; color:#1c2b12; letter-spacing:-1px; }
+  #dist span { font-size:14px; margin-left:2px; }
+  #combo { font-size:15px; font-weight:800; color:#5d6b4a; margin-left:7px; }
+  #combo.off { visibility:hidden; }
+  #best { font-size:14px; font-weight:800; color:#5d6b4a; padding-bottom:4px; }
+  #best.off { visibility:hidden; }
+
+  #threatrow { width:100%; display:flex; align-items:center; gap:7px; padding-left:14px; }
+  #threatrow.hidden { visibility:hidden; }
+  #threat { flex:1; height:11px; border:2px solid #1c2b12; background:#fdfbf2; position:relative; }
+  #threatFill { height:100%; width:0%; background:#8fd14f; }
+  .ic { width:26px; height:20px; flex:none; }
+  #cowIc { position:absolute; top:50%; left:0; transform:translate(-50%,-50%); }
+
+  #pattern { display:flex; gap:5px; }
+  .pn { width:38px; height:44px; border:3px solid #1c2b12; border-bottom-width:7px; background:#fdfbf2;
+        font-size:21px; font-weight:800; color:#1c2b12;
+        display:flex; align-items:center; justify-content:center; }
+  .pn.done { color:#7d8a6c; }
+  .pn.now  { transform:translateY(-4px); }
+  #pattern.fresh .pn { animation:pop .35s ease-out; }
+  @keyframes pop { from { transform:scale(.6) } to { transform:scale(1) } }
+  #pattern.warn .pn { animation:warn .26s steps(1) infinite alternate; }
+  @keyframes warn { from { border-color:#1c2b12 } to { border-color:#e05f3f } }
+
+  #speed { position:fixed; left:6px; right:6px; z-index:5;
+           bottom:calc(112px + env(safe-area-inset-bottom));
+           height:9px; border:2px solid #1c2b12; background:#fdfbf2; }
+  #speedFill { height:100%; width:0%; background:#7fb2d8; }
+  #speed.hidden { visibility:hidden; }
+
+  #pads { position:fixed; left:0; right:0; bottom:0; z-index:5;
+          display:grid; grid-template-columns:1fr 1fr 13vw 1fr 1fr; gap:6px;
+          padding:6px; padding-bottom:calc(6px + env(safe-area-inset-bottom)); }
+  .pad { height:96px; border:3px solid #1c2b12; background:#fdfbf2;
+         font-size:28px; font-weight:800; color:#1c2b12;
+         display:flex; align-items:center; justify-content:center;
+         transition:transform .04s, background .08s; }
+  .pad:nth-child(3) { grid-column:4; }
+  .pad:nth-child(4) { grid-column:5; }
+  .pad.hit { transform:translateY(4px); }
+  #pads.hidden, #pattern.hidden { visibility:hidden; }
+
+  #over { position:fixed; inset:0; z-index:10; display:none;
+          align-items:center; justify-content:center; background:rgba(220,236,245,.93); }
+  #over.on { display:flex; }
+  #panel { text-align:center; padding:26px 34px; border:3px solid #1c2b12; background:#fdfbf2; }
+  #panel.newbest { background:#fdf3c4; }
+  #score { font-size:62px; font-weight:800; color:#1c2b12; letter-spacing:-2px; line-height:1; }
+  #score span { font-size:19px; margin-left:3px; }
+  #sub { margin-top:8px; font-size:15px; font-weight:700; color:#5d6b4a; }
+  #nameRow { margin-top:16px; }
+  #nameIn { width:100%; padding:11px 12px; border:3px solid #1c2b12; background:#fdfbf2;
+            font-size:17px; font-weight:800; color:#1c2b12; font-family:inherit;
+            text-align:center; border-radius:0; -webkit-appearance:none; }
+  #nameIn::placeholder { color:#9aa88a; font-weight:700; }
+  #btns { margin-top:12px; display:flex; gap:7px; justify-content:center; }
+  #again, #save, #rankBtn { padding:13px 18px; border:3px solid #1c2b12;
+           font-size:17px; font-weight:800; color:#1c2b12; font-family:inherit; }
+  #again { background:#f6e05e; }
+  #save { background:#fdfbf2; display:none; }
+  #rankBtn { background:#fdfbf2; }
+  #again:active, #save:active, #rankBtn:active { transform:translateY(3px); }
+
+  #startBtns { display:flex; flex-direction:column; gap:10px; align-items:center; }
+  #title { font-size:31px; font-weight:800; color:#1c2b12; letter-spacing:-1px; margin-bottom:8px; }
+  #rankBtn2 { padding:11px 30px; border:3px solid #1c2b12; background:#fdfbf2;
+              font-size:17px; font-weight:800; color:#1c2b12; font-family:inherit; }
+  #rankBtn2:active { transform:translateY(3px); }
+
+  #rankv { position:fixed; inset:0; z-index:12; display:none;
+           align-items:center; justify-content:center; background:rgba(220,236,245,.95); }
+  #rankv.on { display:flex; }
+  #rankPanel { position:relative; width:min(340px,88vw); max-height:78vh; overflow:auto;
+               padding:22px 20px 18px; border:3px solid #1c2b12; background:#fdfbf2; }
+  #rankTitle { font-size:22px; font-weight:800; color:#1c2b12; text-align:center; margin-bottom:14px; }
+  #rankClose { position:absolute; top:8px; right:10px; width:34px; height:34px;
+               border:none; background:transparent; font-size:24px; font-weight:800;
+               color:#1c2b12; font-family:inherit; line-height:1; }
+  .rk { display:flex; align-items:baseline; gap:8px; padding:7px 4px;
+        border-bottom:2px solid #e6e2d4; font-size:16px; font-weight:700; color:#3d4a2e; }
+  .rk:last-child { border-bottom:none; }
+  .rk.me { background:#fdf3c4; }
+  .rk i { font-style:normal; width:30px; font-weight:800; color:#1c2b12; }
+  .rk b { flex:1; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .rk u { text-decoration:none; font-weight:800; color:#1c2b12; }
+
+  #start { position:fixed; inset:0; z-index:11; display:none;
+           align-items:center; justify-content:center; background:rgba(220,236,245,.92); }
+  #start.on { display:flex; }
+  #go { padding:18px 48px; border:3px solid #1c2b12; background:#f6e05e;
+        font-size:23px; font-weight:800; color:#1c2b12; font-family:inherit; }
+  #go:active { transform:translateY(3px); }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+
+<div id="top">
+  <div id="hudrow">
+    <div id="distwrap">
+      <div id="dist">0<span>m</span></div>
+      <div id="combo" class="off">×0</div>
+    </div>
+    <div id="best" class="off"></div>
+  </div>
+  <div id="threatrow" class="hidden">
+    <div id="threat">
+      <div id="threatFill"></div>
+      <svg class="ic" id="cowIc" viewBox="0 0 26 20">
+      <g stroke="#1c2b12" stroke-width="1.6" stroke-linecap="round" fill="none">
+        <path d="M6 12.5v4.5M10 12.5v4.5M15 12.5v4.5M19 12.5v4.5"/>
+      </g>
+      <ellipse cx="12" cy="8.5" rx="7.5" ry="4.8" fill="#fdfbf2" stroke="#1c2b12" stroke-width="1.6"/>
+      <circle cx="20.6" cy="6.6" r="3.4" fill="#fdfbf2" stroke="#1c2b12" stroke-width="1.6"/>
+      <path d="M19 3.6l-1-2M22.4 3.6l1.2-2" stroke="#1c2b12" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+      <circle cx="9" cy="7.6" r="2.1" fill="#2f2f2f"/>
+      </svg>
+    </div>
+    <svg class="ic" viewBox="0 0 26 20">
+      <g stroke="#5e2618" stroke-width="1.5" stroke-linecap="round" fill="none">
+        <path d="M3 12.5l-1.5 4M7 12.5l-1.5 4M11 12.5l-1.5 4M15 12.5l-1.5 4M19 12.5l-1.5 4"/>
+        <path d="M23 7l2.4-2.6M23.4 10.6l2.2 2"/>
+      </g>
+      <g stroke="#5e2618" stroke-width="1.2">
+        <circle cx="3.4" cy="10.4" r="2.5" fill="#a8452f"/>
+        <circle cx="8" cy="10.4" r="2.7" fill="#c0563f"/>
+        <circle cx="12.6" cy="10.4" r="2.7" fill="#a8452f"/>
+        <circle cx="17.2" cy="10.2" r="2.8" fill="#c0563f"/>
+        <circle cx="21.6" cy="9.8" r="3" fill="#cf6a4a"/>
+      </g>
+    </svg>
+  </div>
+  <div id="pattern" class="hidden"></div>
+</div>
+
+<div id="speed" class="hidden"><div id="speedFill"></div></div>
+
+<div id="pads" class="hidden">
+  <div class="pad" data-g="0">1</div>
+  <div class="pad" data-g="1">2</div>
+  <div class="pad" data-g="2">3</div>
+  <div class="pad" data-g="3">4</div>
+</div>
+
+<div id="start" class="on">
+  <div id="startBtns">
+    <div id="title">지네 못 걷기</div>
+    <button id="go">시작</button>
+    <button id="rankBtn2">순위</button>
+  </div>
+</div>
+
+<div id="rankv">
+  <div id="rankPanel">
+    <button id="rankClose">&times;</button>
+    <div id="rankTitle">순위</div>
+    <div id="rankList"></div>
+  </div>
+</div>
+
+<div id="over">
+  <div id="panel">
+    <div id="score">0<span>m</span></div>
+    <div id="sub"></div>
+    <div id="nameRow"><input id="nameIn" type="text" maxlength="8" placeholder="이름" autocomplete="off"></div>
+    <div id="btns">
+      <button id="again">다시</button>
+      <button id="save">저장</button>
+      <button id="rankBtn">순위</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+var cv = document.getElementById('cv');
+var ctx = cv.getContext('2d');
+var W = 0, H = 0, DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+function resize(){
+  W = window.innerWidth; H = window.innerHeight;
+  cv.width = W * DPR; cv.height = H * DPR;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ───────────────────────────── 소리
+var actx = null, noiseBuf = null, master = null;
+
+function audioReady(){
+  if (!actx){
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return false;
+    actx = new AC();
+    var len = Math.floor(actx.sampleRate * 0.5);
+    noiseBuf = actx.createBuffer(1, len, actx.sampleRate);
+    var d = noiseBuf.getChannelData(0);
+    for (var i = 0; i < len; i++) d[i] = Math.random()*2 - 1;
+
+    var comp = actx.createDynamicsCompressor();
+    comp.threshold.value = -14;
+    comp.knee.value = 22;
+    comp.ratio.value = 6;
+    comp.attack.value = 0.004;
+    comp.release.value = 0.2;
+    master = actx.createGain();
+    master.gain.value = 1.8;
+    master.connect(comp);
+    comp.connect(actx.destination);
+  }
+  if (actx.state === 'suspended') actx.resume();
+  return true;
+}
+
+function noise(dur, freq, q, gain, type, when){
+  var src = actx.createBufferSource();
+  src.buffer = noiseBuf;
+  src.playbackRate.value = 0.8 + Math.random()*0.4;
+  var f = actx.createBiquadFilter();
+  f.type = type || 'bandpass'; f.frequency.value = freq; f.Q.value = q;
+  var g = actx.createGain();
+  var t = actx.currentTime + (when||0);
+  g.gain.setValueAtTime(gain, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  src.connect(f); f.connect(g); g.connect(master);
+  src.start(t); src.stop(t + dur + 0.02);
+}
+
+function tone(f0, f1, dur, gain, type, when){
+  var o = actx.createOscillator();
+  o.type = type || 'sine';
+  var g = actx.createGain();
+  var t = actx.currentTime + (when||0);
+  o.frequency.setValueAtTime(f0, t);
+  o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur);
+  g.gain.setValueAtTime(gain, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(master);
+  o.start(t); o.stop(t + dur + 0.02);
+}
+
+// ───────────────────────────── 음계 · 화성
+// 패드 음정은 C장조 펜타토닉(도·레·미·솔) 고정, 베이스만 I–vi–IV–V로 움직인다.
+// 패드와 음높이의 대응이 안 깨지면서도 패턴이 바뀔 때마다 코드가 넘어간다.
+var PAD_F = [523.25, 587.33, 659.26, 783.99];   // C5 · D5 · E5 · G5
+var ROOT_BASE = 130.81;                          // C3
+var CHORDS = [0, -3, -7, -5];                    // C · Am · F · G
+var CHORD_Q = [[0,4,7], [0,3,7], [0,4,7], [0,4,7]];  // 장·단·장·장
+var LAYER_AT = [100, 250, 450, 700];             // 이 거리마다 악기가 한 층씩
+var chordIdx = 0;
+function rootFreq(){ return ROOT_BASE * Math.pow(2, CHORDS[chordIdx] / 12); }
+
+// ───────────────────────────── 그루브
+// 소 발굽이 리듬 파트다. 16분음표 격자 위에 클라베를 얹는다.
+var BPM = 100;
+var SIXT = 60 / BPM / 4;        // 16분음표 = 0.15초
+var BAR  = SIXT * 16;           // 한 마디 = 2.4초
+var GROOVES = {
+  bossa: [0, 3, 6, 10, 13],                 // 보사노바 클라베
+  swing: [0, 2.67, 6.67, 8, 10.67, 14.67],  // 셔플(트리플렛)
+  four:  [0, 4, 8, 12]                      // 밋밋한 4비트
+};
+// 목에 달린 카우벨 — 발굽이 엇박을 치니 벨이 뼈대를 잡는다
+var BELLS = {
+  bossa: [0, 4, 6, 8, 12, 14],
+  swing: [0, 4, 6.67, 8, 12, 14.67],
+  four:  [0, 4, 8, 12]
+};
+var GROOVE_NAME = 'bossa';      // 'bossa' · 'swing' · 'four'
+var GROOVE = GROOVES[GROOVE_NAME];
+var BELL   = BELLS[GROOVE_NAME];
+var LEAD = 0.45;                // 발을 들어올리는 시간
+function hitTime(i){
+  var n = GROOVE.length;
+  return Math.floor(i / n) * BAR + GROOVE[i % n] * SIXT;
+}
+function bellTime(i){
+  var n = BELL.length;
+  return Math.floor(i / n) * BAR + BELL[i % n] * SIXT;
+}
+
+var voices = 0;
+function pluck(f, dur, gain, type, when, force){
+  if (!actx) return;
+  if (!force){
+    if (voices >= 8) return;
+    voices++;
+    setTimeout(function(){ voices--; }, Math.round((dur + (when||0)) * 1000));
+  }
+  var o = actx.createOscillator();
+  o.type = type || 'triangle';
+  var g = actx.createGain();
+  var t = actx.currentTime + (when||0);
+  o.frequency.setValueAtTime(f, t);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(gain, t + 0.008);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(master);
+  o.start(t); o.stop(t + dur + 0.02);
+}
+
+// 밑에 깔리는 드론 — 코드가 바뀌는 게 귀로 들리도록
+var drone = null;
+function setChord(i, instant){
+  chordIdx = ((i % CHORDS.length) + CHORDS.length) % CHORDS.length;
+  if (!drone) return;
+  var t = actx.currentTime;
+  var f = rootFreq();
+  drone.o1.frequency.cancelScheduledValues(t);
+  drone.o2.frequency.cancelScheduledValues(t);
+  if (instant){
+    drone.o1.frequency.setValueAtTime(f, t);
+    drone.o2.frequency.setValueAtTime(f * 1.4983, t);
+  } else {
+    drone.o1.frequency.setValueAtTime(drone.o1.frequency.value, t);
+    drone.o2.frequency.setValueAtTime(drone.o2.frequency.value, t);
+    drone.o1.frequency.linearRampToValueAtTime(f, t + 0.22);
+    drone.o2.frequency.linearRampToValueAtTime(f * 1.4983, t + 0.22);
+  }
+}
+function droneStart(){
+  if (!audioReady() || drone) return;
+  var lp = actx.createBiquadFilter();
+  lp.type = 'lowpass'; lp.frequency.value = 430; lp.Q.value = 0.8;
+  var g = actx.createGain(); g.gain.value = 0.0001;
+  var o1 = actx.createOscillator(), o2 = actx.createOscillator();
+  o1.type = 'sawtooth'; o2.type = 'sawtooth';
+  o1.detune.value = -6; o2.detune.value = 7;
+  o1.connect(lp); o2.connect(lp); lp.connect(g); g.connect(master);
+  o1.start(); o2.start();
+  drone = { o1:o1, o2:o2, g:g, lp:lp };
+  setChord(0, true);
+  g.gain.exponentialRampToValueAtTime(0.05, actx.currentTime + 0.9);
+}
+function droneStop(){
+  if (!drone || !actx) return;
+  var d = drone; drone = null;
+  var t = actx.currentTime;
+  var r = ROOT_BASE * Math.pow(2, CHORDS[chordIdx] / 12);
+  d.g.gain.cancelScheduledValues(t);
+  d.g.gain.setValueAtTime(Math.max(0.0001, d.g.gain.value), t);
+  d.g.gain.exponentialRampToValueAtTime(0.0001, t + 0.7);
+  d.o1.frequency.cancelScheduledValues(t);
+  d.o2.frequency.cancelScheduledValues(t);
+  d.o1.frequency.setValueAtTime(d.o1.frequency.value, t);
+  d.o2.frequency.setValueAtTime(d.o2.frequency.value, t);
+  d.o1.frequency.exponentialRampToValueAtTime(Math.max(20, r * 0.5), t + 0.7);
+  d.o2.frequency.exponentialRampToValueAtTime(Math.max(20, r * 0.7), t + 0.7);
+  d.o1.stop(t + 0.78); d.o2.stop(t + 0.78);
+}
+
+function sndStep(g, combo, sp){
+  if (!audioReady()) return;
+  var f = PAD_F[g];
+  var dur = 0.36 - 0.18 * Math.max(0, Math.min(1, sp || 0));   // 빨라질수록 스타카토
+  pluck(f, dur, 0.085, 'triangle', 0);
+  pluck(f * 1.006, dur * 0.7, 0.05, 'square', 0.005);          // 싸구려 디튠
+  if (combo >= 8)  pluck(f * 2, dur * 0.5, 0.03, 'triangle', 0.012);
+  if (combo >= 16) pluck(f * 3, dur * 0.4, 0.02, 'triangle', 0.024);
+  noise(0.025, 5200, 1.2, 0.05, 'highpass');                   // 발 닿는 질감
+}
+function sndStomp(vol, accent){
+  if (!audioReady()) return;
+  var r = rootFreq();
+  if (accent){
+    noise(0.14, 200, 0.8, 0.6 * vol, 'lowpass');
+    tone(r * 1.8, r * 0.5, 0.18, 0.55 * vol, 'sine');       // 코드 루트를 짚는 킥
+    noise(0.05, 3000, 1.4, 0.07 * vol, 'highpass');
+  } else {
+    noise(0.09, 340, 0.9, 0.32 * vol, 'lowpass');
+    tone(r * 2.6, r * 1.0, 0.1, 0.3 * vol, 'sine');
+  }
+}
+// 카우벨 — 사각파 두 개를 밴드패스로 조이고, 부딪히는 순간의 금속 잡음을 얹는다
+function sndBell(vol, accent){
+  if (!audioReady()) return;
+  var t = actx.currentTime;
+  var dur = accent ? 0.3 : 0.13;
+  var peak = (accent ? 0.115 : 0.075) * vol;
+
+  var hp = actx.createBiquadFilter();
+  hp.type = 'highpass'; hp.frequency.value = 520;
+  var bp = actx.createBiquadFilter();
+  bp.type = 'bandpass'; bp.frequency.value = 1750; bp.Q.value = 0.75;
+  var g = actx.createGain();
+  hp.connect(bp); bp.connect(g); g.connect(master);
+
+  // 때리는 순간 확 붙었다가 곧바로 반쯤 떨어지고, 남은 울림이 짧게 끌린다
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(peak, t + 0.002);
+  g.gain.exponentialRampToValueAtTime(peak * 0.28, t + 0.028);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+
+  // 540 : 800 — 정수배가 아닌 두 음이 부딪혀야 쇳소리가 난다
+  var fs = [538, 800, 1284];
+  var gains = [1, 0.9, 0.32];
+  for (var i = 0; i < fs.length; i++){
+    var o = actx.createOscillator();
+    o.type = 'square';
+    o.frequency.value = fs[i];
+    o.detune.value = (i - 1) * 9;
+    var og = actx.createGain();
+    og.gain.value = gains[i];
+    o.connect(og); og.connect(hp);
+    o.start(t); o.stop(t + dur + 0.02);
+  }
+  // 쇠끼리 닿는 순간
+  noise(0.02, 4200, 0.9, 0.05 * vol, 'bandpass');
+}
+function chordTones(){
+  var q = CHORD_Q[chordIdx];
+  var r = 261.63 * Math.pow(2, CHORDS[chordIdx] / 12);
+  return [r * Math.pow(2, q[0]/12), r * Math.pow(2, q[1]/12), r * Math.pow(2, q[2]/12)];
+}
+function layerOf(d){
+  var n = 0;
+  for (var i = 0; i < LAYER_AT.length; i++) if (d >= LAYER_AT[i]) n = i + 1;
+  return n;
+}
+// 16분음표마다 호출 — 지금까지 열린 층만 연주한다
+function playStep(pos){
+  if (!actx) return;
+  var L = S.layer || 0;
+  if (pos % 2 === 0) sndShake(pos % 8 === 0);
+  if (L >= 1 && (pos === 0 || pos === 6 || pos === 8 || pos === 14)){
+    var bf = rootFreq();
+    pluck((pos === 6 || pos === 14) ? bf * 1.4983 : bf, 0.32, 0.08, 'triangle', 0, true);
+  }
+  if (L >= 2 && (pos === 3 || pos === 11)){
+    var ct = chordTones();
+    for (var i = 0; i < 3; i++) pluck(ct[i], 0.15, 0.026, 'square', i * 0.006, true);
+  }
+  if (L >= 3 && (pos === 4 || pos === 12)){
+    var n = S.pat[(S.stepIdx >> 2) % S.pat.length];
+    pluck(PAD_F[n] * 2, 0.55, 0.03, 'sine', 0, true);
+  }
+  if (L >= 4 && pos % 2 === 1) sndShake(false);
+}
+function sndLayerUp(){
+  if (!audioReady()) return;
+  noise(0.7, 5200, 0.4, 0.075, 'highpass');
+}
+function sndShake(strong){
+  if (!audioReady()) return;
+  noise(strong ? 0.05 : 0.035, 7000, 0.9, strong ? 0.05 : 0.028, 'highpass');
+}
+function sndFall(){
+  if (!audioReady()) return;
+  noise(0.3, 900, 0.5, 0.32, 'bandpass');
+  var f = PAD_F[0] * Math.pow(2, -1/12);                       // 반음 아래 — 조에서 벗어난 음
+  pluck(f, 0.5, 0.09, 'square', 0, true);
+  pluck(f * 0.5 * 0.985, 0.55, 0.07, 'sawtooth', 0.02, true);
+  if (drone){
+    var t = actx.currentTime;
+    var r0 = rootFreq();
+    drone.o1.frequency.cancelScheduledValues(t);
+    drone.o1.frequency.setValueAtTime(r0, t);
+    drone.o1.frequency.linearRampToValueAtTime(r0 * 0.94, t + 0.12);
+    drone.o1.frequency.linearRampToValueAtTime(r0, t + 0.6);
+  }
+}
+
+// 음메
+function sndMoo(vol){
+  if (!audioReady()) return;
+  var t0 = actx.currentTime;
+  var o = actx.createOscillator();
+  o.type = 'sawtooth';
+  var lp = actx.createBiquadFilter();
+  lp.type = 'lowpass'; lp.Q.value = 5;
+  var g = actx.createGain();
+
+  var lfo = actx.createOscillator();
+  lfo.frequency.value = 5.6;
+  var lfoG = actx.createGain();
+  lfoG.gain.value = 8;
+  lfo.connect(lfoG); lfoG.connect(o.frequency);
+
+  o.frequency.setValueAtTime(142, t0);
+  o.frequency.linearRampToValueAtTime(178, t0 + 0.28);
+  o.frequency.setValueAtTime(178, t0 + 0.5);
+  o.frequency.linearRampToValueAtTime(232, t0 + 0.64);
+  o.frequency.exponentialRampToValueAtTime(112, t0 + 1.28);
+
+  lp.frequency.setValueAtTime(480, t0);
+  lp.frequency.linearRampToValueAtTime(460, t0 + 0.46);
+  lp.frequency.linearRampToValueAtTime(1600, t0 + 0.7);
+  lp.frequency.linearRampToValueAtTime(520, t0 + 1.28);
+
+  var v = 0.45 * vol;
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(v, t0 + 0.1);
+  g.gain.setValueAtTime(v, t0 + 0.44);
+  g.gain.exponentialRampToValueAtTime(v * 0.35, t0 + 0.54);
+  g.gain.exponentialRampToValueAtTime(v * 1.1, t0 + 0.7);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.32);
+
+  o.connect(lp); lp.connect(g); g.connect(master);
+  o.start(t0); o.stop(t0 + 1.36);
+  lfo.start(t0); lfo.stop(t0 + 1.36);
+}
+function sndSplat(){
+  if (!audioReady()) return;
+  noise(0.09, 1400, 0.6, 0.35, 'bandpass');
+  noise(0.45, 420, 0.5, 0.4, 'lowpass');
+  tone(210, 34, 0.4, 0.18, 'square');
+  noise(0.3, 2200, 0.8, 0.12, 'highpass', 0.05);
+}
+// 새 패턴을 아르페지오로 한 번 들려준다
+function sndArp(pat){
+  if (!audioReady()) return;
+  var r = rootFreq();
+  pluck(r, 0.7, 0.05, 'triangle', 0, true);
+  pluck(r * 1.4983, 0.7, 0.035, 'triangle', 0.012, true);
+  for (var i = 0; i < pat.length; i++){
+    pluck(PAD_F[pat[i]], 0.22, 0.06, 'triangle', SIXT + i * SIXT, true);
+  }
+}
+function sndWarn(){
+  if (!audioReady()) return;
+  pluck(PAD_F[3], 0.12, 0.045, 'triangle', 0, true);
+  pluck(PAD_F[3] * 1.5, 0.12, 0.03, 'triangle', 0.09, true);
+}
+function sndCut(){
+  if (!audioReady()) return;
+  noise(0.05, 2600, 1.0, 0.05, 'bandpass');
+}
+
+// ───────────────────────────── 카메라 / 투영
+var cam = { x:0, y:3.3, z:13, yaw:0, pitch:-0.13 };
+var FOCAL = 0;
+
+var P = { sx:0, sy:0, s:0, d:0, ok:false };
+function proj(x, y, z){
+  var rx = x - cam.x, ry = y - cam.y, rz = z - cam.z;
+  var cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw);
+  var x1 = rx * cy - rz * sy;
+  var z1 = rx * sy + rz * cy;
+  var cp = Math.cos(cam.pitch), sp = Math.sin(cam.pitch);
+  var y2 = ry * cp - z1 * sp;
+  var z2 = ry * sp + z1 * cp;
+  var d = -z2;
+  P.d = d;
+  P.ok = d > 0.4;
+  if (!P.ok){ P.sx = 0; P.sy = 0; P.s = 0; return P; }
+  var k = FOCAL / d;
+  P.s = k;
+  P.sx = W/2 + x1 * k;
+  P.sy = H/2 - y2 * k;
+  return P;
+}
+
+var A = {sx:0,sy:0,s:0,ok:false}, B = {sx:0,sy:0,s:0,ok:false};
+function keep(dst){ dst.sx=P.sx; dst.sy=P.sy; dst.s=P.s; dst.ok=P.ok; }
+
+function ellipse(x, y, z, rx, ry, fill, stroke){
+  proj(x, y, z); if (!P.ok) return;
+  ctx.beginPath();
+  ctx.ellipse(P.sx, P.sy, Math.max(0.5, rx*P.s), Math.max(0.5, ry*P.s), 0, 0, Math.PI*2);
+  ctx.fillStyle = fill; ctx.fill();
+  if (stroke){ ctx.lineWidth = Math.max(1, 0.02*P.s); ctx.strokeStyle = stroke; ctx.stroke(); }
+}
+
+function bar(ax, ay, az, bx, by, bz, thick, color){
+  proj(ax, ay, az); keep(A);
+  proj(bx, by, bz); keep(B);
+  if (!A.ok || !B.ok) return;
+  ctx.beginPath();
+  ctx.moveTo(A.sx, A.sy); ctx.lineTo(B.sx, B.sy);
+  ctx.lineCap = 'round';
+  ctx.lineWidth = Math.max(1, thick * (A.s + B.s) * 0.5);
+  ctx.strokeStyle = color;
+  ctx.stroke();
+}
+
+function tri(pts, color){
+  ctx.beginPath();
+  for (var i = 0; i < pts.length; i++){
+    proj(pts[i][0], pts[i][1], pts[i][2]);
+    if (!P.ok) return;
+    if (i === 0) ctx.moveTo(P.sx, P.sy); else ctx.lineTo(P.sx, P.sy);
+  }
+  ctx.closePath();
+  ctx.fillStyle = color; ctx.fill();
+}
+
+function quad(pts, color){ tri(pts, color); }
+
+// ───────────────────────────── 색
+var C = {
+  sky:'#dcecf5', ground:'#a8cc72', stripe:'#9bc063',
+  head:'#cf6a4a', dark:'#5e2618',
+  fox:'#d9793c', foxDark:'#b25c28', foxPale:'#f6efe2',
+  cow:'#f4f1ea', cowShade:'#ddd8ce', cowSpot:'#2f2f2f', hoof:'#3a3a3a',
+  horn:'#e6dcc0', muzzle:'#e3b0aa',
+  bell:'#e0aa22', bellDark:'#b1801a', bellLite:'#f4dc86', strap:'#7a5433',
+  goo:'#c9d24a', gooDark:'#93a02c', gooPale:'#e2e88a'
+};
+
+// 패드 · 패턴 · 지네 몸통이 공유하는 그룹 색
+var GCOL   = ['#d9534a','#dd8f2c','#7fa03a','#4b86ad'];  // 강조색
+var PAD_BG = ['#f7dbd6','#f9e7c9','#e4eecb','#d5e4f0'];  // 패드 기본 바탕
+var GBODY  = ['#c0563f','#c2802f','#7a913a','#4a7f9e'];  // 몸통 밝은 마디
+var GBODY2 = ['#a8452f','#a96a22','#66792c','#3a6884'];  // 몸통 어두운 마디
+var GLEG   = ['#8f3527','#8a5a1c','#4f6a22','#2f5c78'];  // 넓적다리
+var GDRK   = ['#5e2618','#5a3a10','#33481a','#1e3e52'];  // 발끝
+
+// ───────────────────────────── 지네
+var SEG_N = 16, SEG_GAP = 0.46, GROUPS = 4, PER = SEG_N / GROUPS;
+var segs = [];
+for (var i = 0; i < SEG_N; i++) segs.push({ x:-i*SEG_GAP, y:0.55, z:0, pl:0, pr:0, flat:false });
+
+// ───────────────────────────── 체액
+var drops = [], splats = [];
+
+function burstGoo(cx, cz){
+  drops.length = 0; splats.length = 0;
+  for (var i = 0; i < 54; i++){
+    var a = Math.random() * Math.PI * 2;
+    var sp = 1.2 + Math.random() * 5.5;
+    drops.push({
+      x: cx + (Math.random()-0.5)*1.2,
+      y: 0.25 + Math.random()*0.3,
+      z: cz + (Math.random()-0.5)*1.2,
+      vx: Math.cos(a) * sp * 0.7,
+      vy: 2.2 + Math.random() * 5.0,
+      vz: Math.sin(a) * sp,
+      r: 0.05 + Math.random() * 0.13
+    });
+  }
+}
+
+function updateGoo(dt){
+  for (var i = drops.length - 1; i >= 0; i--){
+    var d = drops[i];
+    d.vy -= 20 * dt;
+    d.x += d.vx * dt; d.y += d.vy * dt; d.z += d.vz * dt;
+    if (d.y <= 0.02){
+      splats.push({ x:d.x, z:d.z, r:d.r*1.9 + Math.random()*0.12, t:0 });
+      drops.splice(i, 1);
+    }
+  }
+  for (var j = 0; j < splats.length; j++){
+    if (splats[j].t < 1) splats[j].t = Math.min(1, splats[j].t + dt*5);
+  }
+}
+
+function drawGooGround(){
+  for (var j = 0; j < splats.length; j++){
+    var s = splats[j];
+    var r = s.r * (0.4 + s.t*0.6);
+    ellipse(s.x, 0.015, s.z, r, r*0.42, C.gooDark, null);
+    ellipse(s.x - r*0.15, 0.02, s.z, r*0.6, r*0.26, C.goo, null);
+  }
+  if (S.pool > 0){
+    ellipse(S.poolX, 0.012, S.poolZ, S.pool, S.pool*0.4, C.gooDark, null);
+    ellipse(S.poolX + 0.2, 0.018, S.poolZ, S.pool*0.62, S.pool*0.25, C.goo, null);
+    ellipse(S.poolX - 0.3, 0.02, S.poolZ + 0.2, S.pool*0.25, S.pool*0.1, C.gooPale, null);
+  }
+}
+
+function drawGooAir(){
+  for (var i = 0; i < drops.length; i++){
+    var d = drops[i];
+    ellipse(d.x, d.y, d.z, d.r, d.r*1.25, C.goo, C.gooDark);
+  }
+}
+
+// ───────────────────────────── 상태
+var S = {};
+var padEls = [].slice.call(document.querySelectorAll('.pad'));
+var patEl    = document.getElementById('pattern');
+var padsEl   = document.getElementById('pads');
+var speedEl  = document.getElementById('speed');
+var speedFill= document.getElementById('speedFill');
+var threatEl = document.getElementById('threatrow');
+var cowIc    = document.getElementById('cowIc');
+var startEl  = document.getElementById('start');
+var saveBtn  = document.getElementById('save');
+var nameIn   = document.getElementById('nameIn');
+var rankvEl  = document.getElementById('rankv');
+var rankList = document.getElementById('rankList');
+
+// ───────────────────────────── 순위
+// 앱스스크립트 웹앱을 배포한 뒤 /exec 주소를 여기에 붙이면 켜진다
+var RANK_URL = '';
+
+var myName = '';
+try { myName = window.localStorage.getItem('jine_name') || ''; } catch(e){}
+nameIn.value = myName;
+
+// 같은 사람인지는 이름이 아니라 이 id 로 판정한다 (동명이인이 서로 기록을 덮어쓰지 않게)
+var myId = '';
+try { myId = window.localStorage.getItem('jine_id') || ''; } catch(e){}
+if (!myId){
+  myId = (Date.now().toString(36) + Math.random().toString(36).slice(2)).replace(/[^a-z0-9]/g,'').slice(0, 12);
+  try { window.localStorage.setItem('jine_id', myId); } catch(e){}
+}
+
+function rankOn(){ return !!RANK_URL; }
+
+function rankFetch(cb){
+  if (!rankOn()){ cb(null); return; }
+  var fn = 'jineCb' + Date.now().toString(36);
+  var sc = document.createElement('script');
+  var done = false;
+  function cleanup(){
+    try { delete window[fn]; } catch(e){ window[fn] = undefined; }
+    if (sc.parentNode) sc.parentNode.removeChild(sc);
+  }
+  window[fn] = function(data){ done = true; cleanup(); cb(data); };
+  sc.onerror = function(){ if (!done){ done = true; cleanup(); cb(null); } };
+  sc.src = RANK_URL + (RANK_URL.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + fn + '&t=' + Date.now();
+  document.head.appendChild(sc);
+  setTimeout(function(){ if (!done){ done = true; cleanup(); cb(null); } }, 8000);
+}
+
+function rankSubmit(name, dist, done){
+  if (!rankOn() || !name || !(dist > 0)){ done(); return; }
+  var body = JSON.stringify({ id: myId, name: name, dist: dist });
+  var tries = 0;
+  function go(){
+    try {
+      fetch(RANK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: body
+      }).then(function(){ done(); })['catch'](function(){
+        // 앱스스크립트는 응답을 못 읽는 경우가 있어서, 네트워크 오류만 한 번 더 시도한다
+        if (++tries < 2) setTimeout(go, 900); else done();
+      });
+    } catch(e){ done(); }
+  }
+  go();
+}
+
+function rankRender(list){
+  rankList.innerHTML = '';
+  if (!list || !list.length){
+    var e0 = document.createElement('div');
+    e0.className = 'rk'; e0.textContent = '—';
+    rankList.appendChild(e0);
+    return;
+  }
+  var prev = null, r = 0;
+  for (var i = 0; i < list.length; i++){
+    if (list[i].d !== prev){ r = i + 1; prev = list[i].d; }   // 동점은 공동 순위
+    var row = document.createElement('div');
+    row.className = 'rk' + (myName && list[i].n === myName ? ' me' : '');
+    var a = document.createElement('i'); a.textContent = r;
+    var b = document.createElement('b'); b.textContent = list[i].n;
+    var c = document.createElement('u'); c.textContent = list[i].d + 'm';
+    row.appendChild(a); row.appendChild(b); row.appendChild(c);
+    rankList.appendChild(row);
+  }
+}
+
+function openRank(withScore){
+  var nm = (nameIn.value || '').replace(/\s+/g, ' ').trim().slice(0, 8);
+  if (nm && nm !== myName){
+    myName = nm;
+    try { window.localStorage.setItem('jine_name', myName); } catch(e){}
+  }
+  rankvEl.classList.add('on');
+  rankList.innerHTML = '<div class="rk">…</div>';
+  var d = withScore ? Math.floor(S.dist) : 0;
+  rankSubmit(myName, d, function(){
+    rankFetch(function(list){ rankRender(list); });
+  });
+}
+
+document.getElementById('rankBtn').addEventListener('click', function(){ openRank(true); });
+document.getElementById('rankBtn2').addEventListener('click', function(){ openRank(false); });
+document.getElementById('rankClose').addEventListener('click', function(){
+  rankvEl.classList.remove('on');
+});
+if (!rankOn()){
+  document.getElementById('rankBtn').style.display = 'none';
+  document.getElementById('rankBtn2').style.display = 'none';
+  document.getElementById('nameRow').style.display = 'none';
+}
+
+var threatFill = document.getElementById('threatFill');
+var distEl   = document.getElementById('dist');
+var comboEl  = document.getElementById('combo');
+var bestEl   = document.getElementById('best');
+var overEl   = document.getElementById('over');
+var panelEl  = document.getElementById('panel');
+
+var STROKE = 0.34;
+var IMPULSE = 4.0;
+var DRAG = 1.55;
+var BASE_FRICTION = 0.9;
+var MAXSPD = 14;
+var CUT_EVERY = BAR * 4;
+var CUT_HOLD = BAR;
+var GRACE = 0.3;       // 패턴 교체 직후 오입력 무효 시간
+var WARN_LEAD = 1.2;   // 교체 예고 (반 마디)
+
+var best = 0;
+try { best = parseInt(window.localStorage.getItem('jine_best') || '0', 10) || 0; } catch(e){}
+
+function saveBest(v){
+  try { window.localStorage.setItem('jine_best', String(v)); } catch(e){}
+}
+function renderBest(){
+  if (best > 0){ bestEl.textContent = '최고 ' + best + 'm'; bestEl.classList.remove('off'); }
+  else bestEl.classList.add('off');
+}
+
+// 난이도 곡선 — 첫 세 패턴은 2·3·4개로 시작해서 손에 익힌 뒤 올라간다
+function patLen(){
+  var n = S.patSeq || 0;
+  if (n === 0) return 2;
+  if (n === 1) return 3;
+  if (n === 2) return 4;
+  return S.dist < 300 ? 5 : (S.dist < 800 ? 6 : 7);
+}
+function patBars(){
+  if ((S.patSeq || 0) <= 2) return 2;
+  return S.dist < 300 ? 4 : (S.dist < 800 ? 3 : 2);
+}
+
+function makePattern(){
+  var n0 = patLen();
+  var p = [], prev = -1;
+  for (var i = 0; i < n0; i++){
+    var n;
+    do { n = Math.floor(Math.random()*GROUPS); } while (n === prev);
+    p.push(n); prev = n;
+  }
+  return p;
+}
+
+function renderPattern(fresh){
+  patEl.innerHTML = '';
+  for (var i = 0; i < S.pat.length; i++){
+    var n = S.pat[i];
+    var d = document.createElement('div');
+    d.className = 'pn' + (i < S.idx ? ' done' : (i === S.idx ? ' now' : ''));
+    d.textContent = n + 1;
+    d.style.borderBottomColor = GCOL[n];
+    if (i === S.idx) d.style.background = '#f6e05e';
+    else if (i < S.idx) d.style.background = '#cfd8c0';
+    else d.style.background = PAD_BG[n];
+    patEl.appendChild(d);
+  }
+  if (fresh){
+    patEl.classList.remove('fresh');
+    void patEl.offsetWidth;
+    patEl.classList.add('fresh');
+  }
+}
+
+var played = false;      // 한 판이라도 끝냈는지 (인트로 생략 판단)
+var overTimer = null;
+
+function reset(){
+  droneStop();
+  recPending = false;
+  recEnd(false);
+  saveBtn.style.display = 'none';
+  S.mode = 'intro';
+  S.t = 0; S.total = 0;
+  S.headX = 0; S.headY = 0.62; S.speed = 5.0; S.dist = 0; S.shownDist = -1;
+  S.patSeq = 0; S.layer = 0;
+  S.pat = makePattern(); S.idx = 0; S.grace = 0;
+  S.phase = [-1,-1,-1,-1];
+  S.fallT = 0; S.falls = 0; S.combo = 0;
+  S.shake = 0; S.wave = 0;
+  S.cowX = -70; S.cowSpeed = 5.4;
+  S.musT = 0; S.stepIdx = 0; S.evIdx = 0; S.nextHit = 0;
+  S.assigned = false; S.nextLeg = 0; S.patBar = 0;
+  S.legs = [{t0:0, t1:0}, {t0:0, t1:0}];
+  S.bellIdx = 0; S.bellSide = false; S.bell = { a:0, v:0 };
+  S.cutT = 0; S.wide = false;
+  S.fox = { x: 0 };
+  S.deadT = 0; S.pool = 0; S.poolX = 0; S.poolZ = 0;
+  S.warned = false;
+  drops.length = 0; splats.length = 0;
+  for (var i = 0; i < SEG_N; i++){
+    segs[i].x = -i*SEG_GAP; segs[i].y = 0.55; segs[i].z = 0; segs[i].flat = false;
+  }
+  for (var j = 0; j < GROUPS; j++){
+    padEls[j].style.background = PAD_BG[j];
+    padEls[j].classList.remove('hit');
+    padEls[j].classList.remove('bad');
+  }
+  cam.x = -3; cam.y = 3.3; cam.z = 13; cam.yaw = 0; cam.pitch = -0.13;
+  padsEl.classList.add('hidden');
+  patEl.classList.add('hidden');
+  patEl.classList.remove('warn');
+  speedEl.classList.add('hidden');
+  threatEl.classList.add('hidden');
+  comboEl.classList.add('off');
+  overEl.classList.remove('on');
+  panelEl.classList.remove('newbest');
+  if (overTimer){ clearTimeout(overTimer); overTimer = null; }
+  distEl.innerHTML = '0<span>m</span>';
+  renderBest();
+
+  // 두 번째 판부터는 인트로를 건너뛴다
+  if (played) startPlay();
+}
+
+function startPlay(){
+  if (S.mode === 'play' || S.mode === 'dead') return;
+  played = true;
+  S.mode = 'play';
+  S.t = 0; S.cutT = 0;
+  S.musT = -0.9; S.stepIdx = 0; S.evIdx = 0; S.nextHit = hitTime(0);
+  S.patSeq = 0; S.layer = 0;
+  S.assigned = false; S.nextLeg = 0; S.patBar = 0; S.warned = false;
+  S.legs[0].t0 = 0; S.legs[0].t1 = 0;
+  S.legs[1].t0 = 0; S.legs[1].t1 = 0;
+  S.bellIdx = 0; S.bellSide = false; S.bell.a = 0; S.bell.v = 0;
+  S.speed = 3.5;
+  S.cowX = S.headX - 70;
+  S.pat = makePattern(); S.idx = 0; S.grace = GRACE; S.combo = 0;
+  sndCut();
+  chordIdx = 0;
+  droneStart();
+  setChord(0, true);
+  padsEl.classList.remove('hidden');
+  patEl.classList.remove('hidden');
+  speedEl.classList.remove('hidden');
+  threatEl.classList.remove('hidden');
+  comboEl.classList.remove('off');
+  comboEl.textContent = '×0';
+  renderPattern(true);
+}
+
+// ───────────────────────────── 죽는 장면 녹화
+// 소가 가까울 때만 돌려서, 밟히는 순간이 항상 끝에 남는 클립을 만든다
+var rec = null, recChunks = [], recStart = 0, recKeep = false, recPending = false;
+var recMime = '', clipBlob = null, clipUrl = null;
+
+function pickMime(){
+  if (!window.MediaRecorder || !MediaRecorder.isTypeSupported) return '';
+  var c = ['video/mp4;codecs=avc1', 'video/mp4',
+           'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
+  for (var i = 0; i < c.length; i++) if (MediaRecorder.isTypeSupported(c[i])) return c[i];
+  return '';
+}
+function recSupported(){
+  return !!(cv.captureStream && window.MediaRecorder && pickMime());
+}
+function recBegin(){
+  if (rec || !recSupported()) return;
+  try {
+    recMime = pickMime();
+    var st = cv.captureStream(30);
+    rec = new MediaRecorder(st, { mimeType: recMime, videoBitsPerSecond: 2200000 });
+    recChunks = [];
+    recKeep = false;
+    rec.ondataavailable = function(e){ if (e.data && e.data.size) recChunks.push(e.data); };
+    rec.onstop = function(){
+      var keep = recKeep;
+      var blob = recChunks.length ? new Blob(recChunks, { type: recMime }) : null;
+      recChunks = []; rec = null;
+      if (keep && blob && blob.size > 0){
+        if (clipUrl) URL.revokeObjectURL(clipUrl);
+        clipBlob = blob; clipUrl = URL.createObjectURL(blob);
+        saveBtn.style.display = '';
+      }
+      if (recPending){ recPending = false; recBegin(); }
+    };
+    rec.start();
+    recStart = performance.now();
+  } catch(e){ rec = null; }
+}
+function recEnd(keep){
+  if (!rec) return;
+  recKeep = keep;
+  try { rec.stop(); } catch(e){ rec = null; }
+}
+function recWatch(gap){
+  if (S.mode !== 'play' || !recSupported()) return;
+  if (gap < 16){
+    if (!rec) recBegin();
+    else if (performance.now() - recStart > 12000){ recPending = true; recEnd(false); }
+  } else if (rec){
+    recEnd(false);
+  }
+}
+function saveClip(){
+  if (!clipBlob) return;
+  var ext = recMime.indexOf('mp4') >= 0 ? 'mp4' : 'webm';
+  var name = 'jine-' + Math.floor(S.dist) + 'm.' + ext;
+  try {
+    var f = new File([clipBlob], name, { type: clipBlob.type });
+    if (navigator.canShare && navigator.canShare({ files: [f] })){
+      navigator.share({ files: [f] })['catch'](function(){});
+      return;
+    }
+  } catch(e){}
+  var a = document.createElement('a');
+  a.href = clipUrl; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+// ───────────────────────────── 입력
+function flashPad(g, color, ms, cls){
+  var el = padEls[g];
+  if (cls) el.classList.add(cls);
+  el.style.background = color;
+  if (el._ft) clearTimeout(el._ft);
+  el._ft = setTimeout(function(){
+    el.classList.remove('hit');
+    el.classList.remove('bad');
+    el.style.background = PAD_BG[g];
+    el._ft = null;
+  }, ms);
+}
+
+function press(g){
+  audioReady();
+  if (S.mode !== 'play' || S.fallT > 0) return;
+  if (g !== S.pat[S.idx]){
+    if (S.grace > 0) return;                    // 패턴이 막 바뀐 직후는 무효
+    flashPad(S.pat[S.idx], '#f6e05e', 420, null); // 눌렀어야 할 자리
+    flashPad(g, '#e07a5f', 260, 'bad');
+    fall();
+    return;
+  }
+  S.phase[g] = 0;
+  S.combo++;
+  var imp = IMPULSE * (1 + Math.min(S.combo, 20) * 0.012);
+  S.speed = Math.min(S.speed + imp, MAXSPD);
+  sndStep(g, S.combo, S.speed / MAXSPD);
+  S.idx++;
+  if (S.idx >= S.pat.length) S.idx = 0;
+  renderPattern(false);
+  flashPad(g, GCOL[g], 130, 'hit');
+  comboEl.textContent = '×' + S.combo;
+}
+
+function fall(){
+  S.fallT = 0.5; S.falls++; S.combo = 0;
+  S.speed *= 0.35; S.idx = 0;
+  for (var i = 0; i < GROUPS; i++) S.phase[i] = -1;
+  S.shake = 0.6;
+  sndFall();
+  renderPattern(false);
+  comboEl.textContent = '×0';
+}
+
+var hasPointer = !!window.PointerEvent;
+padEls.forEach(function(el){
+  var g = parseInt(el.getAttribute('data-g'), 10);
+  if (hasPointer){
+    el.addEventListener('pointerdown', function(e){ e.preventDefault(); press(g); });
+  } else {
+    el.addEventListener('touchstart', function(e){ e.preventDefault(); press(g); }, {passive:false});
+    el.addEventListener('mousedown', function(e){ e.preventDefault(); press(g); });
+  }
+});
+
+// 화면 아무 곳이나 눌러도 오디오가 열리고, 인트로는 건너뛸 수 있다
+function anyDown(){
+  if (S.mode === 'ready' || S.mode === 'dead') return;
+  audioReady();
+  if (S.mode === 'intro' && S.t < 1.2) return;   // 첫 판의 도입부는 남긴다
+  if (S.mode === 'intro' || S.mode === 'meet' || S.mode === 'fox' || S.mode === 'face') startPlay();
+}
+if (hasPointer) document.addEventListener('pointerdown', anyDown);
+else {
+  document.addEventListener('touchstart', anyDown, {passive:true});
+  document.addEventListener('mousedown', anyDown);
+}
+
+window.addEventListener('keydown', function(e){
+  if (e.repeat) return;
+  if (document.activeElement === nameIn) return;
+  if (rankvEl.classList.contains('on')) return;
+  var k = e.key.toLowerCase();
+  if (k === 'enter' || k === ' ' || k === 'spacebar'){
+    e.preventDefault();
+    audioReady();
+    if (startEl.classList.contains('on')) beginFromStart();
+    else if (overEl.classList.contains('on')) reset();
+    else if (S.mode !== 'play' && S.mode !== 'dead') anyDown();
+    return;
+  }
+  var m = {'1':0,'2':1,'3':2,'4':3,'a':0,'s':1,'d':2,'f':3};
+  if (m[k] !== undefined){ e.preventDefault(); press(m[k]); }
+});
+document.getElementById('again').addEventListener('click', function(){ audioReady(); reset(); });
+
+function beginFromStart(){
+  audioReady();
+  startEl.classList.remove('on');
+  if (S.mode === 'ready'){ S.mode = 'intro'; S.t = 0; }
+  // 소리가 켜졌다는 걸 귀로 알려준다
+  pluck(PAD_F[0], 0.35, 0.07, 'triangle', 0, true);
+  pluck(PAD_F[2], 0.35, 0.06, 'triangle', 0.09, true);
+  pluck(PAD_F[3], 0.5, 0.06, 'triangle', 0.18, true);
+}
+document.getElementById('go').addEventListener('click', beginFromStart);
+saveBtn.addEventListener('click', saveClip);
+
+// ───────────────────────────── 배경
+function drawWorld(){
+  var fwdX = -Math.sin(cam.yaw), fwdZ = -Math.cos(cam.yaw);
+  proj(cam.x + fwdX*4000, 0, cam.z + fwdZ*4000);
+  var hy = P.ok ? P.sy : H*0.35;
+  ctx.fillStyle = C.ground; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = C.sky;    ctx.fillRect(0, 0, W, Math.max(0, Math.min(H, hy)));
+
+  if (S.wide){
+    for (var x = cam.x - 130; x < cam.x - 1; x += 4){
+      var xs = Math.floor(x/4)*4;
+      quad([[xs,0,-45],[xs+1.3,0,-45],[xs+1.3,0,45],[xs,0,45]], C.stripe);
+    }
+  } else {
+    var start = Math.floor((cam.x - 60) / 4) * 4;
+    for (var x2 = start; x2 < cam.x + 110; x2 += 4){
+      quad([[x2,0,-70],[x2+1.3,0,-70],[x2+1.3,0,9],[x2,0,9]], C.stripe);
+    }
+  }
+}
+
+// ───────────────────────────── 그림자 (지네 · 여우)
+function drawShadows(){
+  ctx.globalAlpha = 0.16;
+  ellipse(S.headX, 0.012, 0, 0.44, 0.17, '#000000', null);
+  for (var i = 0; i < SEG_N; i++){
+    ellipse(segs[i].x, 0.012, segs[i].z, 0.34, 0.13, '#000000', null);
+  }
+  if (foxVisible()) ellipse(S.fox.x, 0.012, 0, 0.5, 0.2, '#000000', null);
+  ctx.globalAlpha = 1;
+}
+
+// ───────────────────────────── 지네
+function drawCentipede(){
+  var dead = (S.mode === 'dead');
+  var writhe = dead ? (0.45 + 0.55 * Math.exp(-S.deadT * 0.35)) : 0;
+  var tangle = S.fallT > 0 ? Math.min(S.fallT / 0.5, 1) : writhe;
+
+  for (var i = 0; i < SEG_N; i++){
+    var sg = segs[i];
+    var gi = Math.floor(i / PER);
+    var within = (i % PER) / PER;
+
+    var p;
+    if (S.mode !== 'play' && S.mode !== 'dead'){
+      p = (S.wave - i*0.12) % 1; if (p < 0) p += 1;
+    } else {
+      p = S.phase[gi];
+      if (p >= 0){ p = p - within*0.2; if (p < 0) p = -1; }
+    }
+
+    for (var side = 0; side < 2; side++){
+      var sgn = side ? 1 : -1;
+      var hx = sg.x, hy = sg.y, hz = sg.z + sgn*0.26;
+      var fx, fy = 0, fz = sg.z + sgn*0.82;
+
+      if (p >= 0 && p <= 1 && !dead){
+        if (p < 0.5){
+          var q = p / 0.5;
+          fx = sg.x - 0.4 + q*0.95;
+          fy = Math.sin(q*Math.PI) * 0.4;
+          if (side) sg.pr = fx; else sg.pl = fx;
+        } else {
+          fx = side ? sg.pr : sg.pl;
+        }
+      } else {
+        fx = sg.x - 0.25;
+      }
+
+      if (tangle > 0){
+        var tt = S.total*12 + i*1.7 + side*2.4;
+        fx += Math.sin(tt) * 1.5 * tangle;
+        fz += Math.cos(tt*0.83) * 1.0 * tangle;
+        fy += (0.2 + Math.sin(tt*1.4)*0.25) * tangle;
+        if (dead) fy = Math.max(0.02, fy * 0.55);
+      }
+
+      var kx = (hx+fx)/2 + 0.1, ky = (hy+fy)/2 + 0.24, kz = (hz+fz)/2 + sgn*0.08;
+      bar(hx, hy, hz, kx, ky, kz, 0.085, GLEG[gi]);
+      bar(kx, ky, kz, fx, fy, fz, 0.065, GDRK[gi]);
+    }
+  }
+
+  var prevX = S.headX, prevY = S.headY, prevZ = 0;
+  for (var j = 0; j < SEG_N; j++){
+    var sj = segs[j];
+    bar(prevX, prevY, prevZ, sj.x, sj.y, sj.z, sj.flat ? 0.16 : 0.62, GBODY2[Math.floor(j / PER)]);
+    prevX = sj.x; prevY = sj.y; prevZ = sj.z;
+  }
+
+  for (var k = SEG_N - 1; k >= 0; k--){
+    var sk = segs[k];
+    var gk = Math.floor(k / PER);
+    var active = (!S.wide && S.mode === 'play' && S.phase[gk] >= 0);
+    ellipse(sk.x, sk.y, sk.z, sk.flat ? 0.5 : 0.38, sk.flat ? 0.09 : 0.34,
+            (k%2 ? GBODY2[gk] : GBODY[gk]), active ? GCOL[gk] : C.dark);
+  }
+
+  var hxp = S.headX, hyp = S.headY;
+  var tw = (S.mode === 'face') ? Math.sin(S.total*5.2) * 0.16 : 0;
+  bar(hxp+0.3, hyp+0.16, -0.1, hxp+1.05, hyp+0.6+tw, -0.42 - tw*0.35, 0.035, C.dark);
+  bar(hxp+0.3, hyp+0.16,  0.1, hxp+1.05, hyp+0.6-tw,  0.42 + tw*0.35, 0.035, C.dark);
+  ellipse(hxp, hyp, 0, 0.5, dead ? 0.12 : 0.44, C.head, C.dark);
+  if (!dead){
+    ellipse(hxp+0.3, hyp+0.14, -0.24, 0.09, 0.09, '#1a1a1a', null);
+    ellipse(hxp+0.3, hyp+0.14,  0.24, 0.09, 0.09, '#1a1a1a', null);
+  }
+}
+
+// ───────────────────────────── 여우
+function foxVisible(){
+  return S.mode === 'meet' || S.mode === 'fox' || S.mode === 'face';
+}
+
+function drawFox(){
+  var fx = S.fox.x, fz = 0;
+  var r = (S.mode === 'meet') ? 0 : (S.mode === 'fox' ? Math.min(S.t / 1.2, 1) : 1);
+  var e = r*r*(3-2*r);
+  var tilt = Math.sin(S.total*2.2) * 0.06 * e;
+  var shrug = e * 0.16;
+
+  // 꼬리 (뒤쪽 = +x)
+  bar(fx+0.3, 0.95, fz, fx+1.15, 1.35, fz, 0.34, C.fox);
+  ellipse(fx+1.3, 1.45, fz, 0.26, 0.24, C.foxPale, null);
+
+  // 뒷다리 / 앞다리
+  bar(fx+0.22, 0, fz-0.18, fx+0.22, 0.6, fz-0.18, 0.13, C.foxDark);
+  bar(fx-0.18, 0, fz+0.18, fx-0.18, 0.6, fz+0.18, 0.13, C.fox);
+
+  // 몸통
+  ellipse(fx, 1.02 + shrug*0.3, fz, 0.38, 0.52, C.fox, C.foxDark);
+  ellipse(fx-0.16, 0.95, fz+0.12, 0.24, 0.34, C.foxPale, null);
+
+  // 팔 — 어깨에서 옆으로, 팔꿈치에서 위로, 손바닥 위로
+  [-1, 1].forEach(function(sgn){
+    var shX = fx - 0.05, shY = 1.36 + shrug, shZ = fz + sgn*0.26;
+    var elX = shX - 0.12 - e*0.06, elY = shY - 0.32 + e*0.06, elZ = shZ + sgn*(0.22 + e*0.3);
+    var haX = elX - 0.1 - e*0.12, haY = elY + 0.3 + e*0.42, haZ = elZ + sgn*(0.08 + e*0.22);
+    bar(shX, shY, shZ, elX, elY, elZ, 0.11, C.fox);
+    bar(elX, elY, elZ, haX, haY, haZ, 0.1, C.fox);
+    ellipse(haX, haY + 0.06, haZ, 0.17, 0.07, C.foxPale, C.foxDark);
+  });
+
+  // 머리
+  var hy = 1.86 + shrug;
+  ellipse(fx, hy, fz, 0.4, 0.36, C.fox, C.foxDark);
+  // 주둥이
+  bar(fx-0.1, hy - 0.04 - tilt, fz, fx-0.72, hy - 0.14 - tilt*3, fz, 0.19, C.fox);
+  ellipse(fx-0.74, hy - 0.15 - tilt*3, fz, 0.09, 0.08, '#2b2b2b', null);
+  ellipse(fx-0.4, hy - 0.12, fz, 0.2, 0.1, C.foxPale, null);
+  // 귀
+  tri([[fx+0.12, hy+0.22, fz-0.28],[fx-0.06, hy+0.78, fz-0.34],[fx-0.14, hy+0.2, fz-0.22]], C.fox);
+  tri([[fx+0.12, hy+0.22, fz+0.28],[fx-0.06, hy+0.78, fz+0.34],[fx-0.14, hy+0.2, fz+0.22]], C.fox);
+  tri([[fx+0.06, hy+0.28, fz-0.29],[fx-0.05, hy+0.62, fz-0.32],[fx-0.08, hy+0.27, fz-0.25]], C.foxDark);
+  tri([[fx+0.06, hy+0.28, fz+0.29],[fx-0.05, hy+0.62, fz+0.32],[fx-0.08, hy+0.27, fz+0.25]], C.foxDark);
+  // 눈
+  ellipse(fx-0.2, hy+0.1, fz-0.26, 0.055, 0.075, '#1a1a1a', null);
+  ellipse(fx-0.2, hy+0.1, fz+0.26, 0.055, 0.075, '#1a1a1a', null);
+}
+
+// ───────────────────────────── 소
+// 앞다리는 그루브가 잡아준 착지 시각까지 내려온다
+function legPhase(i){
+  var L = S.legs[i];
+  if (!L || L.t1 <= L.t0) return 1;
+  var p = (S.musT - L.t0) / (L.t1 - L.t0);
+  return p < 0 ? 0 : (p > 1 ? 1 : p);
+}
+// 뒷다리는 그냥 걷는 시늉
+function walkPhase(i){
+  var w = (S.musT / 0.85 + i * 0.5) % 1;
+  if (w < 0) w += 1;
+  return Math.min(w / 0.6, 1);
+}
+
+function cowLeg(hipX, hipY, footX, footY, z, thick){
+  var kneeX = (hipX + footX)/2 - 0.25, kneeY = (hipY + footY)/2 + 0.2;
+  bar(hipX, hipY, z, kneeX, kneeY, z, thick, C.cow);
+  bar(kneeX, kneeY, z, footX, footY + 0.45, z, thick*0.72, C.cow);
+  ellipse(footX, footY + 0.22, z, 0.36, 0.28, C.hoof, null);
+}
+
+// 가까운 쪽 앞발은 지네에 접근할수록 몸통 z(=0)로 끌어당긴다 — 밟히는 그림이 나오도록
+function nearFootZ(){
+  var impactGap = Math.abs((S.cowX + 2.5) - S.headX);
+  var aim = Math.max(0, 1 - impactGap / 5);
+  return 1.15 * (1 - aim * 0.85);
+}
+
+function drawCow(){
+  var cx = S.cowX;
+  var bodyX = cx - 1.0, bodyY = 8.3;
+  var nfz = nearFootZ();
+
+  // 그림자
+  ctx.globalAlpha = 0.2;
+  ellipse(cx - 1.0, 0.03, 0, 4.2, 1.5, '#000000', null);
+  ctx.globalAlpha = 1;
+
+  // 앞발 그림자 (내려찍히는 자리)
+  for (var s = 0; s < 2; s++){
+    var p0 = legPhase(s);
+    var fy0 = Math.sin(p0 * Math.PI) * 3.4;
+    var fx0 = cx + 0.3 + p0 * 2.2;
+    var near = 1 - Math.min(fy0/3.4, 1);
+    ctx.globalAlpha = 0.12 + near*0.34;
+    ellipse(fx0, 0.04, s ? nfz : -1.15, 0.5 + (1-near)*0.7, (0.5 + (1-near)*0.7)*0.4, '#000000', null);
+    ctx.globalAlpha = 1;
+  }
+
+  // 먼쪽 다리 (z = -1.15)
+  var pF0 = legPhase(0);
+  cowLeg(cx + 1.9, 6.6, cx + 0.3 + pF0*2.2, Math.sin(pF0*Math.PI)*3.4, -1.15, 0.52);
+  var pR0 = walkPhase(0);
+  cowLeg(cx - 3.6, 6.6, cx - 4.3 + pR0*2.0, Math.sin(pR0*Math.PI)*2.4, -1.15, 0.55);
+
+  // 꼬리
+  bar(cx - 4.5, 9.1, 0, cx - 5.3, 6.4, 0, 0.16, C.cow);
+  ellipse(cx - 5.35, 6.15, 0, 0.22, 0.34, C.cowSpot, null);
+
+  // 몸통
+  ellipse(bodyX, bodyY, 0, 3.5, 1.95, C.cow, null);
+  ellipse(bodyX - 2.6, bodyY + 0.15, 0, 1.7, 1.7, C.cow, null);
+  ellipse(bodyX + 2.3, bodyY - 0.05, 0, 1.9, 1.8, C.cow, null);
+  ellipse(bodyX - 0.6, bodyY - 1.5, 0, 2.4, 0.7, C.cowShade, null);
+
+  // 얼룩
+  ellipse(bodyX - 1.4, bodyY + 0.7, 0.9, 1.1, 0.85, C.cowSpot, null);
+  ellipse(bodyX + 1.2, bodyY - 0.5, 0.9, 0.75, 0.6, C.cowSpot, null);
+  ellipse(bodyX - 3.0, bodyY - 0.4, 0.9, 0.6, 0.5, C.cowSpot, null);
+
+  // 목 · 머리
+  bar(cx + 1.9, 9.1, 0, cx + 3.9, 8.5, 0, 1.15, C.cow);
+  ellipse(cx + 4.6, 8.2, 0, 1.2, 0.85, C.cow, null);
+  ellipse(cx + 5.5, 7.75, 0, 0.62, 0.5, C.muzzle, null);
+  ellipse(cx + 5.6, 7.85, -0.22, 0.09, 0.07, '#8a5f5a', null);
+  ellipse(cx + 5.6, 7.85, 0.22, 0.09, 0.07, '#8a5f5a', null);
+  ellipse(cx + 4.3, 8.5, -0.55, 0.13, 0.17, '#1a1a1a', null);
+  ellipse(cx + 4.3, 8.5, 0.55, 0.13, 0.17, '#1a1a1a', null);
+  // 귀
+  ellipse(cx + 3.9, 8.75, -0.85, 0.42, 0.24, C.cow, null);
+  ellipse(cx + 3.9, 8.75, 0.85, 0.42, 0.24, C.cow, null);
+  // 뿔
+  bar(cx + 4.2, 8.9, -0.35, cx + 4.5, 9.5, -0.6, 0.17, C.horn);
+  bar(cx + 4.2, 8.9, 0.35, cx + 4.5, 9.5, 0.6, 0.17, C.horn);
+
+  // 목걸이 · 카우벨
+  var ang = S.bell ? S.bell.a : 0;
+  var ax = cx + 3.35, ay = 8.15, BZ = 0.55, BL = 0.72;
+  var bx = ax + Math.sin(ang) * BL, by = ay - Math.cos(ang) * BL;
+  bar(cx + 2.9, 8.55, BZ, cx + 3.8, 8.25, BZ, 0.26, C.strap);
+  bar(ax, ay, BZ, bx, by, BZ, 0.09, C.strap);
+  ellipse(bx, by + 0.08, BZ, 0.26, 0.3, C.bell, null);
+  ellipse(bx, by - 0.16, BZ, 0.33, 0.13, C.bellDark, null);
+  ellipse(bx - 0.1, by + 0.14, BZ, 0.08, 0.12, C.bellLite, null);
+  ellipse(bx, by - 0.3, BZ, 0.07, 0.06, '#6b4f11', null);
+}
+
+// 카메라에 가까운 쪽 다리 — 지네보다 뒤에 그려서 밟는 그림이 가려지지 않게 한다
+function drawCowFront(){
+  var cx = S.cowX;
+  var nfz = nearFootZ();
+  var pF1 = legPhase(1);
+  cowLeg(cx + 1.9, 6.6, cx + 0.3 + pF1*2.2, Math.sin(pF1*Math.PI)*3.4, nfz, 0.52);
+  var pR1 = walkPhase(1);
+  cowLeg(cx - 3.6, 6.6, cx - 4.3 + pR1*2.0, Math.sin(pR1*Math.PI)*2.4, 1.15, 0.55);
+}
+
+// ───────────────────────────── 카메라
+function updateCamera(dt){
+  var wideNow = false;
+  if (S.mode === 'play'){
+    S.cutT += dt;
+    wideNow = (S.cutT % CUT_EVERY) > (CUT_EVERY - CUT_HOLD);
+  }
+  if (wideNow !== S.wide){
+    S.wide = wideNow;
+    sndCut();
+    if (wideNow){
+      var d = Math.max(0, S.headX - S.cowX);
+      sndMoo(Math.max(0.35, 1 / (1 + d * 0.035)));
+    }
+  }
+
+  if (S.mode === 'dead'){
+    // 밟힌 자리에 붙었다가 천천히 물러난다
+    var k = Math.min(S.deadT / 2.2, 1);
+    var ke = k*k*(3-2*k);
+    cam.x = S.poolX + 0.3 + ke*0.6;
+    cam.y = 0.8 + ke*1.7;
+    cam.z = 3.0 + ke*5.2;
+    cam.yaw = 0;
+    cam.pitch = -0.03 - ke*0.12;
+    FOCAL = Math.max(W*0.9, H*0.45);
+  } else if (S.wide){
+    cam.x = S.headX + 2.6; cam.y = 1.6; cam.z = 0.55;
+    cam.yaw = Math.PI/2; cam.pitch = 0.02;
+    FOCAL = Math.max(W*0.45, H*0.24);
+  } else if (S.mode === 'meet'){
+    // 투숏 — 둘이 마주친 자리
+    var mid = (S.headX + S.fox.x) / 2;
+    cam.x += (mid - cam.x) * Math.min(1, dt*3.5);
+    cam.y = 1.75; cam.z = 6.8; cam.yaw = 0; cam.pitch = -0.05;
+    FOCAL = Math.max(W*0.9, H*0.45);
+  } else if (S.mode === 'fox'){
+    // 여우 정면 — 카메라가 지네 쪽에서 여우를 올려다본다
+    cam.x = S.fox.x - 1.75; cam.y = 1.58; cam.z = 0;
+    cam.yaw = -Math.PI/2; cam.pitch = 0.04;
+    FOCAL = Math.max(W*1.0, H*0.5);
+  } else if (S.mode === 'face'){
+    // 지네 정면 — 리버스 앵글
+    cam.x = S.headX + 1.5; cam.y = 0.86; cam.z = 0;
+    cam.yaw = Math.PI/2; cam.pitch = -0.06;
+    FOCAL = Math.max(W*1.0, H*0.5);
+  } else {
+    var gap = S.headX - S.cowX;
+    var vis = Math.min(gap, 7);
+    cam.x += ((S.headX - 3.0 - vis*0.2) - cam.x) * Math.min(1, dt*4);
+    cam.z += ((13 + vis*0.35) - cam.z) * Math.min(1, dt*2);
+    cam.y = 3.3; cam.yaw = 0; cam.pitch = -0.13;
+    FOCAL = Math.max(W*0.9, H*0.45);
+  }
+
+  if (S.shake > 0) S.shake -= dt * 1.8;
+  var shk = Math.max(0, S.shake);
+  cam.x += Math.sin(S.total*44) * shk * 0.1;
+  cam.y += Math.sin(S.total*37) * shk * 0.14;
+}
+
+// ───────────────────────────── 뒤에서 다가오는 그림자
+function drawThreatVignette(){
+  if (S.mode !== 'play' || S.wide) return;
+  var gp = S.headX - S.cowX;
+  if (gp > 15) return;
+  var a = Math.min(0.5, (15 - gp) / 15 * 0.5);
+  var grd = ctx.createLinearGradient(0, 0, W*0.5, 0);
+  grd.addColorStop(0, 'rgba(28,22,12,' + a.toFixed(3) + ')');
+  grd.addColorStop(1, 'rgba(28,22,12,0)');
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, W*0.5, H);
+}
+
+// ───────────────────────────── HUD
+var lastThreat = -1, lastSpeedW = -1;
+function updateHud(){
+  if (S.mode === 'play'){
+    var d = Math.floor(S.dist);
+    if (d !== S.shownDist){
+      S.shownDist = d;
+      distEl.innerHTML = d + '<span>m</span>';
+    }
+    var gap = S.headX - S.cowX;
+    var t = Math.max(0, Math.min(1, (60 - gap) / 58));
+    var pct = Math.round(t * 100);
+    if (pct !== lastThreat){
+      lastThreat = pct;
+      threatFill.style.width = pct + '%';
+      threatFill.style.background = 'hsl(' + Math.round((1-t)*95) + ',62%,48%)';
+      cowIc.style.left = pct + '%';
+    }
+    var sw = Math.round(Math.min(1, S.speed / MAXSPD) * 100);
+    if (sw !== lastSpeedW){
+      lastSpeedW = sw;
+      speedFill.style.width = sw + '%';
+    }
+  }
+}
+
+// ───────────────────────────── 루프
+var last = performance.now();
+
+function frame(now){
+  requestAnimationFrame(frame);
+  var raw = Math.min((now - last) / 1000, 0.05);
+  last = now;
+
+  // 밟힌 직후 짧은 슬로모션
+  var dt = raw;
+  if (S.mode === 'dead' && S.deadT < 0.5) dt = raw * 0.3;
+
+  S.t += dt; S.total += dt;
+
+  if (S.mode === 'ready'){
+    S.wave += dt * 2.3;   // 제자리걸음으로 기다린다
+  }
+  else if (S.mode === 'intro'){
+    S.wave += dt * 2.3;
+    S.headX += 5.2 * dt;
+    if (S.t > 2.3){ S.mode = 'meet'; S.t = 0; S.fox.x = S.headX + 4.4; sndCut(); }
+  }
+  else if (S.mode === 'meet'){
+    S.wave += dt * 2.3;
+    S.headX += Math.max(0, 5.2 - S.t*7.5) * dt;
+    if (S.t > 1.4){ S.mode = 'fox'; S.t = 0; sndCut(); }
+  }
+  else if (S.mode === 'fox'){
+    S.wave += dt * 0.4;
+    if (S.t > 1.8){ S.mode = 'face'; S.t = 0; sndCut(); }
+  }
+  else if (S.mode === 'face'){
+    S.wave += dt * 0.4;
+    if (S.t > 1.3) startPlay();
+  }
+  else if (S.mode === 'play'){
+    if (S.fallT > 0){
+      S.fallT -= dt;
+    } else {
+      for (var g = 0; g < GROUPS; g++){
+        if (S.phase[g] >= 0){
+          S.phase[g] += dt / STROKE;
+          if (S.phase[g] > 1) S.phase[g] = -1;
+        }
+      }
+      S.speed -= (S.speed * DRAG + BASE_FRICTION) * dt;
+      if (S.speed < 0) S.speed = 0;
+    }
+
+    S.headX += S.speed * dt;
+    S.dist += S.speed * dt;
+
+    if (S.grace > 0) S.grace -= dt;
+
+    S.cowSpeed = 5.4 + S.dist * 0.004;
+    S.cowX += S.cowSpeed * dt;
+
+    // ── 음악 시계
+    S.musT += dt;
+
+    // 편성 — 멀리 갈수록 악기가 쌓인다
+    var lv = layerOf(S.dist);
+    if (lv > S.layer){ S.layer = lv; sndLayerUp(); }
+
+    // 16분음표 시계
+    while (S.musT >= S.stepIdx * SIXT){
+      playStep(S.stepIdx % 16);
+      S.stepIdx++;
+    }
+
+    // 카우벨 — 흔들릴 때마다 울린다
+    while (S.musT >= bellTime(S.bellIdx)){
+      var bgap = Math.max(0, S.headX - (S.cowX + 2.5));
+      var bk = S.bellIdx % BELL.length;
+      sndBell(0.3 + 0.7 / (1 + bgap * 0.12), BELL[bk] === 0 || BELL[bk] === 8);
+      S.bell.v += (S.bellSide ? 2.9 : -2.9);
+      S.bellSide = !S.bellSide;
+      S.bellIdx++;
+    }
+
+    // 다음 발굽 예약 — 미리 들어올려야 박에 맞춰 떨어진다
+    if (!S.assigned && S.musT >= S.nextHit - LEAD){
+      var LG = S.legs[S.nextLeg];
+      LG.t0 = Math.min(S.musT, S.nextHit - LEAD);
+      LG.t1 = S.nextHit;
+      S.assigned = true;
+    }
+
+    // 착지 = 소리 + 판정
+    while (S.musT >= S.nextHit){
+      var accent = (S.evIdx % GROOVE.length) === 0;
+      var impact = S.cowX + 2.5;
+      var gapNow = Math.max(0, S.headX - impact);
+      sndStomp(0.4 + 0.6 / (1 + gapNow * 0.12), accent);
+      S.shake = Math.max(S.shake, 0.5 / (1 + gapNow * 0.3));
+      for (var k = 0; k < SEG_N; k++){
+        if (Math.abs(segs[k].x - impact) < 1.05){ die(impact, segs[k].z); break; }
+      }
+      if (S.mode === 'play' && Math.abs(S.headX - impact) < 1.05) die(impact, 0);
+
+      S.nextLeg ^= 1;
+      S.evIdx++;
+      S.assigned = false;
+      S.nextHit = hitTime(S.evIdx);
+
+      // 코드와 패턴은 마디 첫 박에서만 바뀐다
+      if (S.evIdx % GROOVE.length === 0){
+        var barNo = S.evIdx / GROOVE.length;
+        if (barNo % 2 === 0) setChord(chordIdx + 1, false);
+        if (barNo - S.patBar >= patBars()){
+          S.patBar = barNo;
+          S.patSeq++;
+          S.pat = makePattern(); S.idx = 0;
+          S.grace = GRACE; S.warned = false;
+          patEl.classList.remove('warn');
+          sndArp(S.pat);
+          renderPattern(true);
+        }
+      }
+      if (S.mode !== 'play') break;
+    }
+
+    recWatch(S.headX - S.cowX);
+
+    // 교체 예고
+    if (!S.warned && (S.patBar + patBars()) * BAR - S.musT <= WARN_LEAD){
+      S.warned = true;
+      patEl.classList.add('warn');
+      sndWarn();
+    }
+  }
+  else if (S.mode === 'dead'){
+    S.deadT += raw;
+    S.cowX += S.cowSpeed * dt * 0.25;
+    if (S.pool < 2.4) S.pool += dt * 3.2;
+  }
+
+  if (S.bell){
+    S.bell.v += (-90 * S.bell.a - 4.2 * S.bell.v) * dt;
+    S.bell.a += S.bell.v * dt;
+    if (S.bell.a >  0.7){ S.bell.a =  0.7; S.bell.v *= -0.4; }
+    if (S.bell.a < -0.7){ S.bell.a = -0.7; S.bell.v *= -0.4; }
+  }
+
+  updateGoo(dt);
+
+  S.headY = (S.mode === 'dead') ? 0.08 : 0.62 + Math.sin(S.total*7)*0.03;
+
+  var wob = (S.fallT > 0 ? 0.3 : 0.06);
+  var px = S.headX, py = S.headY, pz = 0;
+  for (var n = 0; n < SEG_N; n++){
+    var sg = segs[n];
+    var ty, tz;
+    if (S.mode === 'dead'){ ty = 0.08; tz = sg.z; }
+    else {
+      ty = 0.55 + Math.sin(S.total*6 - n*0.5) * wob;
+      tz = Math.sin(S.total*3.4 - n*0.42) * wob * 1.7;
+    }
+    var L = Math.min(1, dt * 9);
+    sg.y += (ty - sg.y) * L;
+    sg.z += (tz - sg.z) * L;
+
+    var dx = sg.x - px, dy = sg.y - py, dz = sg.z - pz;
+    var len = Math.sqrt(dx*dx + dy*dy + dz*dz);
+    if (len < 0.0001){ dx = -1; dy = 0; dz = 0; len = 1; }
+    sg.x = px + dx/len * SEG_GAP;
+    sg.y = py + dy/len * SEG_GAP;
+    sg.z = pz + dz/len * SEG_GAP;
+    px = sg.x; py = sg.y; pz = sg.z;
+  }
+
+  updateCamera(dt);
+
+  drawWorld();
+  drawGooGround();
+  drawShadows();
+  drawCow();
+  drawCentipede();
+  drawCowFront();
+  drawGooAir();
+  if (foxVisible()) drawFox();
+  drawThreatVignette();
+
+  updateHud();
+}
+
+function die(atX, atZ){
+  if (S.mode !== 'play') return;
+  S.mode = 'dead';
+  S.deadT = 0;
+  S.shake = 1.3;
+  S.wide = false;
+  S.poolX = (atX === undefined) ? S.headX : atX;
+  S.poolZ = (atZ === undefined) ? 0 : atZ;
+  S.pool = 0.2;
+  burstGoo(S.poolX, S.poolZ);
+  sndSplat();
+  droneStop();
+  for (var i = 0; i < SEG_N; i++) segs[i].flat = true;
+  padsEl.classList.add('hidden');
+  patEl.classList.add('hidden');
+  patEl.classList.remove('warn');
+  speedEl.classList.add('hidden');
+  threatEl.classList.add('hidden');
+  comboEl.classList.add('off');
+
+  var d = Math.floor(S.dist);
+  var isNew = d > best;
+  if (isNew){ best = d; saveBest(best); renderBest(); }
+
+  document.getElementById('score').innerHTML = d + '<span>m</span>';
+  var parts = [];
+  if (S.falls) parts.push('넘어짐 ' + S.falls + '회');
+  if (best > 0 && !isNew) parts.push('최고 ' + best + 'm');
+  document.getElementById('sub').textContent = parts.join(' · ');
+  if (isNew) panelEl.classList.add('newbest');
+  else panelEl.classList.remove('newbest');
+
+  saveBtn.style.display = 'none';
+  clipBlob = null;
+  setTimeout(function(){ recEnd(true); }, 2000);
+
+  if (myName) rankSubmit(myName, d, function(){});
+
+  if (overTimer) clearTimeout(overTimer);
+  overTimer = setTimeout(function(){
+    overEl.classList.add('on');
+    overTimer = null;
+  }, 2300);
+}
+
+reset();
+S.mode = 'ready';
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
