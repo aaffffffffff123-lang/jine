@@ -1076,12 +1076,12 @@ padEls.forEach(function(el){
   }
 });
 
-// 화면 아무 곳이나 눌러도 오디오가 열리고, 인트로는 건너뛸 수 있다
+// 화면 아무 곳이나 눌러도 오디오만 열린다 — 인트로는 건너뛰지 못한다
 function anyDown(){
-  if (S.mode === 'ready' || S.mode === 'dead') return;
   audioReady();
-  if (S.mode === 'intro' && S.t < 1.2) return;   // 첫 판의 도입부는 남긴다
-  if (S.mode === 'intro' || S.mode === 'meet' || S.mode === 'fox' || S.mode === 'face') startPlay();
+  if (S.mode === 'intro' || S.mode === 'meet' || S.mode === 'fox' || S.mode === 'face'){
+    S.shake = Math.max(S.shake, 0.18);   // 눌린 건 전달됐다는 표시
+  }
 }
 if (hasPointer) document.addEventListener('pointerdown', anyDown);
 else {
@@ -1099,7 +1099,6 @@ window.addEventListener('keydown', function(e){
     audioReady();
     if (startEl.classList.contains('on')) beginFromStart();
     else if (overEl.classList.contains('on')) reset();
-    else if (S.mode !== 'play' && S.mode !== 'dead') anyDown();
     return;
   }
   var m = {'1':0,'2':1,'3':2,'4':3,'a':0,'s':1,'d':2,'f':3};
