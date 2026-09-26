@@ -4,6 +4,30 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>지네 못 걷기</title>
+<script>
+(() => {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="12" fill="#dcecf5"/>
+  <g stroke="#1c2b12" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 38 7 47 M20 41 18 51 M30 42 29 52 M40 40 41 50" fill="none" stroke-width="2.5"/>
+    <circle cx="13" cy="34" r="7" fill="#4a7f9e" stroke-width="2"/>
+    <circle cx="23" cy="35" r="8" fill="#7a913a" stroke-width="2"/>
+    <circle cx="33" cy="35" r="9" fill="#c2802f" stroke-width="2"/>
+    <circle cx="46" cy="32" r="13" fill="#c0563f" stroke-width="2.5"/>
+    <path d="M44 21 42 12 M51 22 57 14" fill="none" stroke-width="2.5"/>
+    <circle cx="43" cy="12" r="2" fill="#1c2b12" stroke="none"/>
+    <circle cx="57" cy="14" r="2" fill="#1c2b12" stroke="none"/>
+    <circle cx="50" cy="29" r="2.4" fill="#1c2b12" stroke="none"/>
+    <path d="M48 37 Q52 40 56 36" fill="none" stroke-width="1.8"/>
+  </g>
+</svg>`;
+  const link = document.createElement('link');
+  link.rel = 'icon';
+  link.type = 'image/svg+xml';
+  link.href = 'data:image/svg+xml,' + encodeURIComponent(svg);
+  document.head.appendChild(link);
+})();
+</script>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html, body { height:100%; overflow:hidden; background:#dcecf5; }
@@ -44,6 +68,11 @@
            height:9px; border:2px solid #1c2b12; background:#fdfbf2; }
   #speedFill { height:100%; width:0%; background:#7fb2d8; }
   #speed.hidden { visibility:hidden; }
+
+  #top.moral { visibility:hidden; }
+  /* 실제 자막은 녹화되는 캔버스에 그린다. 이 요소는 화면 낭독용이다. */
+  #moral { position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+           overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
 
   #pads { position:fixed; left:0; right:0; bottom:0; z-index:5;
           display:grid; grid-template-columns:1fr 1fr 13vw 1fr 1fr; gap:6px;
@@ -93,10 +122,13 @@
   #rankBtn { background:#fdfbf2; }
   #again:active, #save:active, #rankBtn:active { transform:translateY(3px); }
 
-  #startBtns { display:flex; flex-direction:column; gap:10px; align-items:center; }
-  #title { font-size:31px; font-weight:800; color:#1c2b12; letter-spacing:-1px; margin-bottom:8px; }
-  #rankBtn2 { padding:11px 30px; border:3px solid #1c2b12; background:#fdfbf2;
-              font-size:17px; font-weight:800; color:#1c2b12; font-family:inherit; }
+  #startBtns { width:min(680px,94vw); display:flex; flex-direction:column; align-items:center; }
+  #title { font-size:clamp(35px, 7vw, 64px); line-height:1.1; font-weight:900;
+           color:#1c2b12; letter-spacing:-.055em; white-space:nowrap; }
+  #titleArt { display:block; width:min(610px,90vw); height:auto; max-height:40vh;
+              margin:20px 0 28px; object-fit:contain; }
+  #rankBtn2 { margin-top:13px; padding:8px 18px; border:2px solid #1c2b12; background:#fdfbf2;
+              font-size:15px; font-weight:800; color:#1c2b12; font-family:inherit; }
   #rankBtn2:active { transform:translateY(3px); }
 
   #rankv { position:fixed; inset:0; z-index:12; display:none;
@@ -117,11 +149,16 @@
   .rk u { text-decoration:none; font-weight:800; color:#1c2b12; }
 
   #start { position:fixed; inset:0; z-index:11; display:none;
-           align-items:center; justify-content:center; background:rgba(220,236,245,.92); }
+           align-items:center; justify-content:center; background:#dcecf5; }
   #start.on { display:flex; }
-  #go { padding:18px 48px; border:3px solid #1c2b12; background:#f6e05e;
+  #go { min-width:180px; padding:16px 36px; border:3px solid #1c2b12; background:#f6e05e;
         font-size:23px; font-weight:800; color:#1c2b12; font-family:inherit; }
   #go:active { transform:translateY(3px); }
+  @media (max-height:540px){
+    #titleArt { max-height:34vh; margin:5px 0 8px; }
+    #go { padding:9px 32px; }
+    #rankBtn2 { margin-top:6px; }
+  }
 </style>
 </head>
 <body>
@@ -174,9 +211,54 @@
   <div class="pad" data-g="3">4</div>
 </div>
 
+<div id="moral" aria-live="polite"><div id="moralText"></div></div>
+
 <div id="start" class="on">
   <div id="startBtns">
-    <div id="title">지네 못 걷기</div>
+    <h1 id="title">지네 못 걷기</h1>
+    <svg id="titleArt" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 270" role="img" aria-labelledby="titleArtName titleArtDesc">
+  <title id="titleArtName">지네, 여우, 소</title>
+  <desc id="titleArtDesc">세 캐릭터가 어깨를 나란히 하고 웃고 있다.</desc>
+  <g stroke="#1c2b12" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- 지네: 얼굴 뒤에 줄줄이 달린 몸통이 조금 보인다. -->
+    <circle cx="52" cy="165" r="27" fill="#4a7f9e"/>
+    <circle cx="75" cy="158" r="30" fill="#7a913a"/>
+    <circle cx="99" cy="151" r="34" fill="#c2802f"/>
+    <ellipse cx="159" cy="145" rx="72" ry="67" fill="#c0563f"/>
+    <path d="M131 87 Q111 55 104 31 M181 83 Q200 51 220 39" fill="none"/>
+    <circle cx="103" cy="30" r="5" fill="#1c2b12" stroke="none"/>
+    <circle cx="221" cy="38" r="5" fill="#1c2b12" stroke="none"/>
+    <ellipse cx="134" cy="133" rx="5" ry="7" fill="#1c2b12" stroke="none"/>
+    <ellipse cx="182" cy="131" rx="5" ry="7" fill="#1c2b12" stroke="none"/>
+    <path d="M128 167 Q153 189 187 162" fill="none" stroke-width="3.5"/>
+
+    <!-- 여우: 주둥이를 길게 빼고 얌전하게 웃는다. -->
+    <path d="M301 99 L301 27 Q304 18 312 27 L341 70 Z" fill="#b25c28"/>
+    <path d="M398 95 L423 28 Q429 21 430 32 L426 120 Z" fill="#b25c28"/>
+    <path d="M309 80 L310 40 L334 77 Z M407 79 L422 44 L416 103 Z" fill="#f1b37d" stroke="none"/>
+    <path d="M288 135 Q291 85 346 73 Q387 65 429 109 Q449 143 427 183 Q406 211 355 212 Q306 209 290 176 Q281 157 288 135 Z" fill="#d9793c"/>
+    <path d="M312 157 Q332 143 357 158 Q388 142 413 157 Q412 191 360 195 Q316 194 312 157 Z" fill="#f6efe2" stroke="none"/>
+    <ellipse cx="329" cy="132" rx="5" ry="6" fill="#1c2b12" stroke="none"/>
+    <ellipse cx="392" cy="132" rx="5" ry="6" fill="#1c2b12" stroke="none"/>
+    <path d="M344 158 Q359 151 374 158 L361 172 Z" fill="#1c2b12" stroke-width="2"/>
+    <path d="M361 172 Q347 184 335 172 M361 172 Q373 186 388 173" fill="none" stroke-width="3"/>
+
+    <!-- 소: 가장 크지만 세상 순한 얼굴이다. -->
+    <path d="M503 91 Q484 85 474 67 Q476 59 485 60 Q501 78 512 77" fill="#c8b69b"/>
+    <path d="M626 75 Q644 76 653 58 Q664 54 665 64 Q654 89 633 95" fill="#c8b69b"/>
+    <path d="M507 113 Q485 90 466 96 Q451 105 469 130 Q487 142 505 131" fill="#fdfbf2"/>
+    <path d="M627 111 Q650 91 668 101 Q682 113 664 134 Q644 145 626 130" fill="#fdfbf2"/>
+    <path d="M496 145 Q497 72 568 67 Q645 64 651 140 Q650 211 572 216 Q501 214 496 145 Z" fill="#fdfbf2"/>
+    <path d="M508 126 Q515 80 544 78 Q566 76 571 99 Q565 127 539 143 Q514 155 508 126 Z" fill="#383630" stroke="none"/>
+    <path d="M626 171 Q652 146 641 120 Q622 125 610 150 Z" fill="#383630" stroke="none"/>
+    <ellipse cx="542" cy="140" rx="5" ry="7" fill="#1c2b12" stroke="none"/>
+    <ellipse cx="603" cy="139" rx="5" ry="7" fill="#1c2b12" stroke="none"/>
+    <ellipse cx="574" cy="181" rx="55" ry="30" fill="#e6aaa4"/>
+    <ellipse cx="552" cy="178" rx="5" ry="7" fill="#8a5f5a" stroke="none"/>
+    <ellipse cx="595" cy="177" rx="5" ry="7" fill="#8a5f5a" stroke="none"/>
+    <path d="M548 193 Q574 210 600 191" fill="none" stroke-width="3"/>
+  </g>
+</svg>
     <button id="go">시작</button>
     <button id="rankBtn2">순위</button>
   </div>
@@ -720,6 +802,9 @@ var speedEl  = document.getElementById('speed');
 var speedFill= document.getElementById('speedFill');
 var threatEl = document.getElementById('threatrow');
 var cowIc    = document.getElementById('cowIc');
+var topEl    = document.getElementById('top');
+var moralEl  = document.getElementById('moral');
+var moralText= document.getElementById('moralText');
 var startEl  = document.getElementById('start');
 var saveBtn  = document.getElementById('save');
 var nameIn   = document.getElementById('nameIn');
@@ -899,6 +984,34 @@ function renderPattern(fresh){
 
 var played = false;      // 한 판이라도 끝냈는지 (인트로 생략 판단)
 var overTimer = null;
+var MORAL_LINES = [
+  '삶의 의미도 이와 같습니다.',
+  '신경 안 쓸 때는 자연스럽게 흘러가지만',
+  '궁금해하면 인생은 꼬이기 시작하는 것입니다.'
+];
+
+function showMoralLine(n){
+  if (S.moralLine === n) return;
+  S.moralLine = n;
+  moralText.textContent = MORAL_LINES[n];
+}
+
+function beginMoral(atX, atZ, accent){
+  S.mode = 'moral';
+  S.moralT = 0;
+  S.moralLine = -1;
+  S.moralX = atX; S.moralZ = atZ; S.moralAccent = accent;
+  S.wide = false; S.shake = 0;
+  S.musT = S.nextHit - LEAD * 0.8;
+  padsEl.classList.add('hidden');
+  patEl.classList.add('hidden');
+  speedEl.classList.add('hidden');
+  threatEl.classList.add('hidden');
+  topEl.classList.add('moral');
+  moralEl.classList.add('on');
+  showMoralLine(0);
+  sndCut();
+}
 
 function reset(){
   droneStop();
@@ -921,6 +1034,7 @@ function reset(){
   S.cutT = 0; S.wide = false;
   S.fox = { x: 0 };
   S.deadT = 0; S.pool = 0; S.poolX = 0; S.poolZ = 0;
+  S.moralT = 0; S.moralLine = -1;
   S.warned = false;
   drops.length = 0; splats.length = 0;
   for (var i = 0; i < SEG_N; i++){
@@ -938,6 +1052,8 @@ function reset(){
   speedEl.classList.add('hidden');
   threatEl.classList.add('hidden');
   comboEl.classList.add('off');
+  topEl.classList.remove('moral');
+  moralEl.classList.remove('on');
   overEl.classList.remove('on');
   panelEl.classList.remove('newbest');
   if (overTimer){ clearTimeout(overTimer); overTimer = null; }
@@ -1183,11 +1299,12 @@ function drawCentipede(){
 
   for (var i = 0; i < SEG_N; i++){
     var sg = segs[i];
-    var gi = Math.floor(i / PER);
-    var within = (i % PER) / PER;
+    // 네 다리가 한 묶음이 아니라 몸 전체에 1·2·3·4 순서로 반복된다.
+    var gi = i % GROUPS;
+    var within = Math.floor(i / GROUPS) / PER;
 
     var p;
-    if (S.mode !== 'play' && S.mode !== 'dead'){
+    if (S.mode !== 'play' && S.mode !== 'dead' && S.mode !== 'moral'){
       p = (S.wave - i*0.12) % 1; if (p < 0) p += 1;
     } else {
       p = S.phase[gi];
@@ -1229,13 +1346,13 @@ function drawCentipede(){
   var prevX = S.headX, prevY = S.headY, prevZ = 0;
   for (var j = 0; j < SEG_N; j++){
     var sj = segs[j];
-    bar(prevX, prevY, prevZ, sj.x, sj.y, sj.z, sj.flat ? 0.16 : 0.62, GBODY2[Math.floor(j / PER)]);
+    bar(prevX, prevY, prevZ, sj.x, sj.y, sj.z, sj.flat ? 0.16 : 0.62, GBODY2[j % GROUPS]);
     prevX = sj.x; prevY = sj.y; prevZ = sj.z;
   }
 
   for (var k = SEG_N - 1; k >= 0; k--){
     var sk = segs[k];
-    var gk = Math.floor(k / PER);
+    var gk = k % GROUPS;
     var active = (!S.wide && S.mode === 'play' && S.phase[gk] >= 0);
     ellipse(sk.x, sk.y, sk.z, sk.flat ? 0.5 : 0.38, sk.flat ? 0.09 : 0.34,
             (k%2 ? GBODY2[gk] : GBODY[gk]), active ? GCOL[gk] : C.dark);
@@ -1441,6 +1558,11 @@ function updateCamera(dt){
     cam.x = S.headX + 2.6; cam.y = 1.6; cam.z = 0.55;
     cam.yaw = Math.PI/2; cam.pitch = 0.02;
     FOCAL = focalOf(0.53, 0.33);
+  } else if (S.mode === 'moral'){
+    // 마지막 문장을 읽는 동안 지네 얼굴만 보여준다. 다음 컷이 발굽이다.
+    cam.x = S.headX + 1.5; cam.y = 0.86; cam.z = 0;
+    cam.yaw = Math.PI/2; cam.pitch = -0.06;
+    FOCAL = focalOf(1.1, 0.69);
   } else if (S.mode === 'meet'){
     // 투숏 — 둘이 마주친 자리
     var mid = (S.headX + S.fox.x) / 2;
@@ -1483,6 +1605,34 @@ function drawThreatVignette(){
   grd.addColorStop(1, 'rgba(28,22,12,0)');
   ctx.fillStyle = grd;
   ctx.fillRect(0, 0, W*0.5, H);
+}
+
+function drawMoralCaption(){
+  if (S.mode !== 'moral' || S.moralLine < 0) return;
+  ctx.save();
+  var size = Math.max(19, Math.min(28, W * 0.037));
+  var lineH = size * 1.35;
+  var limit = Math.min(720, W - 28);
+  ctx.font = '800 ' + size + 'px "Apple SD Gothic Neo","Malgun Gothic",sans-serif';
+  var words = MORAL_LINES[S.moralLine].split(' '), lines = [], line = '';
+  for (var i = 0; i < words.length; i++){
+    var next = line ? line + ' ' + words[i] : words[i];
+    if (line && ctx.measureText(next).width > limit - 32){ lines.push(line); line = words[i]; }
+    else line = next;
+  }
+  if (line) lines.push(line);
+  var wide = 0;
+  for (var j = 0; j < lines.length; j++) wide = Math.max(wide, ctx.measureText(lines[j]).width);
+  var bw = Math.min(limit, Math.ceil(wide + 32));
+  var bh = Math.ceil(lines.length * lineH + 18);
+  var x = (W - bw) / 2, y = Math.max(18, H * 0.09);
+  var born = [0, 1.45, 3.15][S.moralLine];
+  ctx.globalAlpha = Math.max(0.08, Math.min(1, (S.moralT - born) / 0.23));
+  ctx.fillStyle = '#fdfbf2'; ctx.fillRect(x, y, bw, bh);
+  ctx.lineWidth = 2; ctx.strokeStyle = '#1c2b12'; ctx.strokeRect(x+1, y+1, bw-2, bh-2);
+  ctx.fillStyle = '#1c2b12'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (var k = 0; k < lines.length; k++) ctx.fillText(lines[k], W/2, y + 9 + lineH*(k+0.5));
+  ctx.restore();
 }
 
 // ───────────────────────────── HUD
@@ -1604,12 +1754,14 @@ function frame(now){
       var accent = (S.evIdx % GROOVE.length) === 0;
       var impact = S.cowX + 2.5;
       var gapNow = Math.max(0, S.headX - impact);
+      var caught = false, caughtZ = 0;
+      for (var k = 0; k < SEG_N; k++){
+        if (Math.abs(segs[k].x - impact) < 1.05){ caught = true; caughtZ = segs[k].z; break; }
+      }
+      if (!caught && Math.abs(S.headX - impact) < 1.05) caught = true;
+      if (caught){ beginMoral(impact, caughtZ, accent); break; }
       sndStomp(0.4 + 0.6 / (1 + gapNow * 0.12), accent);
       S.shake = Math.max(S.shake, 0.5 / (1 + gapNow * 0.3));
-      for (var k = 0; k < SEG_N; k++){
-        if (Math.abs(segs[k].x - impact) < 1.05){ die(impact, segs[k].z); break; }
-      }
-      if (S.mode === 'play' && Math.abs(S.headX - impact) < 1.05) die(impact, 0);
 
       S.nextLeg ^= 1;
       S.evIdx++;
@@ -1636,10 +1788,21 @@ function frame(now){
     recWatch(S.headX - S.cowX);
 
     // 교체 예고
-    if (!S.warned && (S.patBar + patBars()) * BAR - S.musT <= WARN_LEAD){
+    if (S.mode === 'play' && !S.warned && (S.patBar + patBars()) * BAR - S.musT <= WARN_LEAD){
       S.warned = true;
       patEl.classList.add('warn');
       sndWarn();
+    }
+  }
+  else if (S.mode === 'moral'){
+    S.moralT += raw;
+    if (S.moralT >= 3.15) showMoralLine(2);
+    else if (S.moralT >= 1.45) showMoralLine(1);
+    if (S.moralT >= 5.45){
+      moralEl.classList.remove('on');
+      S.musT = S.nextHit; // 멈춰 있던 발굽을 자막이 끝나는 순간 내려놓는다.
+      sndStomp(1, S.moralAccent);
+      die(S.moralX, S.moralZ);
     }
   }
   else if (S.mode === 'dead'){
@@ -1657,7 +1820,8 @@ function frame(now){
 
   updateGoo(dt);
 
-  S.headY = (S.mode === 'dead') ? 0.08 : 0.62 + Math.sin(S.total*7)*0.03;
+  S.headY = (S.mode === 'dead') ? 0.08 :
+            (S.mode === 'moral') ? 0.62 : 0.62 + Math.sin(S.total*7)*0.03;
 
   var wob = (S.fallT > 0 ? 0.3 : 0.06);
   var px = S.headX, py = S.headY, pz = 0;
@@ -1693,12 +1857,13 @@ function frame(now){
   drawGooAir();
   if (foxVisible()) drawFox();
   drawThreatVignette();
+  drawMoralCaption();
 
   updateHud();
 }
 
 function die(atX, atZ){
-  if (S.mode !== 'play') return;
+  if (S.mode !== 'play' && S.mode !== 'moral') return;
   S.mode = 'dead';
   S.deadT = 0;
   S.shake = 1.3;
