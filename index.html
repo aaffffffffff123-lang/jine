@@ -996,6 +996,10 @@ function showMoralLine(n){
   moralText.textContent = MORAL_LINES[n];
 }
 
+function moralCowShot(){
+  return S.moralT < 1.1 || (S.moralT >= 2.55 && S.moralT < 3.6);
+}
+
 function beginMoral(atX, atZ, accent){
   S.mode = 'moral';
   S.moralT = 0;
@@ -1010,7 +1014,6 @@ function beginMoral(atX, atZ, accent){
   topEl.classList.add('moral');
   moralEl.classList.add('on');
   showMoralLine(0);
-  sndCut();
 }
 
 function reset(){
@@ -1559,10 +1562,16 @@ function updateCamera(dt){
     cam.yaw = Math.PI/2; cam.pitch = 0.02;
     FOCAL = focalOf(0.53, 0.33);
   } else if (S.mode === 'moral'){
-    // 마지막 문장을 읽는 동안 지네 얼굴만 보여준다. 다음 컷이 발굽이다.
-    cam.x = S.headX + 1.5; cam.y = 0.86; cam.z = 0;
-    cam.yaw = Math.PI/2; cam.pitch = -0.06;
-    FOCAL = focalOf(1.1, 0.69);
+    // 소와 지네를 각자 정면에서 찍는다. 발굽과 지네를 한 화면에 멈춰 세우지 않는다.
+    if (moralCowShot()){
+      cam.x = S.cowX + 8.0; cam.y = 8.2; cam.z = 0;
+      cam.yaw = Math.PI/2; cam.pitch = 0;
+      FOCAL = focalOf(0.9, 0.65);
+    } else {
+      cam.x = S.headX + 1.5; cam.y = 0.86; cam.z = 0;
+      cam.yaw = Math.PI/2; cam.pitch = -0.06;
+      FOCAL = focalOf(1.1, 0.69);
+    }
   } else if (S.mode === 'meet'){
     // 투숏 — 둘이 마주친 자리
     var mid = (S.headX + S.fox.x) / 2;
@@ -1610,28 +1619,28 @@ function drawThreatVignette(){
 function drawMoralCaption(){
   if (S.mode !== 'moral' || S.moralLine < 0) return;
   ctx.save();
-  var size = Math.max(19, Math.min(28, W * 0.037));
+  var size = Math.max(18, Math.min(23, W * 0.035));
   var lineH = size * 1.35;
-  var limit = Math.min(720, W - 28);
-  ctx.font = '800 ' + size + 'px "Apple SD Gothic Neo","Malgun Gothic",sans-serif';
+  var limit = Math.min(680, W - 36);
+  ctx.font = '700 ' + size + 'px "Apple SD Gothic Neo","Malgun Gothic",sans-serif';
   var words = MORAL_LINES[S.moralLine].split(' '), lines = [], line = '';
   for (var i = 0; i < words.length; i++){
     var next = line ? line + ' ' + words[i] : words[i];
-    if (line && ctx.measureText(next).width > limit - 32){ lines.push(line); line = words[i]; }
+    if (line && ctx.measureText(next).width > limit){ lines.push(line); line = words[i]; }
     else line = next;
   }
   if (line) lines.push(line);
-  var wide = 0;
-  for (var j = 0; j < lines.length; j++) wide = Math.max(wide, ctx.measureText(lines[j]).width);
-  var bw = Math.min(limit, Math.ceil(wide + 32));
-  var bh = Math.ceil(lines.length * lineH + 18);
-  var x = (W - bw) / 2, y = Math.max(18, H * 0.09);
-  var born = [0, 1.45, 3.15][S.moralLine];
-  ctx.globalAlpha = Math.max(0.08, Math.min(1, (S.moralT - born) / 0.23));
-  ctx.fillStyle = '#fdfbf2'; ctx.fillRect(x, y, bw, bh);
-  ctx.lineWidth = 2; ctx.strokeStyle = '#1c2b12'; ctx.strokeRect(x+1, y+1, bw-2, bh-2);
-  ctx.fillStyle = '#1c2b12'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  for (var k = 0; k < lines.length; k++) ctx.fillText(lines[k], W/2, y + 9 + lineH*(k+0.5));
+  var bottom = H - Math.max(56, H * 0.12);
+  var born = [0, 1.1, 2.55][S.moralLine];
+  ctx.globalAlpha = Math.max(0.08, Math.min(1, (S.moralT - born) / 0.16));
+  ctx.fillStyle = '#1c2b12'; ctx.strokeStyle = 'rgba(253,251,242,.85)';
+  ctx.lineWidth = 3; ctx.lineJoin = 'round';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (var k = 0; k < lines.length; k++){
+    var y = bottom - (lines.length-k-0.5)*lineH;
+    ctx.strokeText(lines[k], W/2, y);
+    ctx.fillText(lines[k], W/2, y);
+  }
   ctx.restore();
 }
 
@@ -1796,9 +1805,9 @@ function frame(now){
   }
   else if (S.mode === 'moral'){
     S.moralT += raw;
-    if (S.moralT >= 3.15) showMoralLine(2);
-    else if (S.moralT >= 1.45) showMoralLine(1);
-    if (S.moralT >= 5.45){
+    if (S.moralT >= 2.55) showMoralLine(2);
+    else if (S.moralT >= 1.1) showMoralLine(1);
+    if (S.moralT >= 4.45){
       moralEl.classList.remove('on');
       S.musT = S.nextHit; // 멈춰 있던 발굽을 자막이 끝나는 순간 내려놓는다.
       sndStomp(1, S.moralAccent);
@@ -1849,14 +1858,19 @@ function frame(now){
   updateCamera(dt);
 
   drawWorld();
-  drawGooGround();
-  drawShadows();
-  drawCow();
-  drawCentipede();
-  drawCowFront();
-  drawGooAir();
-  if (foxVisible()) drawFox();
-  drawThreatVignette();
+  if (S.mode === 'moral'){
+    if (moralCowShot()) drawCow();
+    else drawCentipede();
+  } else {
+    drawGooGround();
+    drawShadows();
+    drawCow();
+    drawCentipede();
+    drawCowFront();
+    drawGooAir();
+    if (foxVisible()) drawFox();
+    drawThreatVignette();
+  }
   drawMoralCaption();
 
   updateHud();
