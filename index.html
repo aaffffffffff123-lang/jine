@@ -97,15 +97,17 @@
   }
 
   #over { position:fixed; inset:0; z-index:10; display:none;
-          align-items:center; justify-content:center; background:rgba(220,236,245,.93); }
+          flex-direction:column; align-items:center; justify-content:center; background:rgba(220,236,245,.93); }
   #over.on { display:flex; }
   #panel { text-align:center; padding:26px 34px; border:3px solid #1c2b12; background:#fdfbf2; }
   #panel.newbest { background:#fdf3c4; }
   #score { font-size:62px; font-weight:800; color:#1c2b12; letter-spacing:-2px; line-height:1; }
   #score span { font-size:19px; margin-left:3px; }
   #sub { margin-top:8px; font-size:15px; font-weight:700; color:#5d6b4a; }
-  #endingLine { max-width:310px; margin:15px auto 0; color:#5d6b4a;
-                font-size:14px; font-weight:500; line-height:1.5; }
+  #comicLink { display:inline-block; margin-top:14px; padding:9px 18px;
+               border:2px solid #1c2b12; background:#fdfbf2; color:#1c2b12;
+               font-size:14px; font-weight:800; text-decoration:none; }
+  #comicLink:active { transform:translateY(3px); }
   #nameRow { margin-top:16px; }
   #nameIn { width:100%; padding:11px 12px; border:3px solid #1c2b12; background:#fdfbf2;
             font-size:17px; font-weight:800; color:#1c2b12; font-family:inherit;
@@ -271,7 +273,6 @@
   <div id="panel">
     <div id="score">0<span>m</span></div>
     <div id="sub"></div>
-    <div id="endingLine">삶의 의미도 이와 같습니다. 신경 안 쓸 때는 자연스럽게 흘러가지만 궁금해하면 인생은 꼬이기 시작하는 것입니다.</div>
     <div id="nameRow"><input id="nameIn" type="text" maxlength="8" placeholder="이름" autocomplete="off"></div>
     <div id="btns">
       <button id="again">다시</button>
@@ -279,6 +280,7 @@
       <button id="rankBtn">순위</button>
     </div>
   </div>
+  <a id="comicLink" href="https://aaffffffffff123-lang.github.io/hyeomgyu/#1141" target="_blank" rel="noopener noreferrer">지네 만화</a>
 </div>
 
 <script>
@@ -1810,7 +1812,7 @@ function die(atX, atZ){
 
   saveBtn.style.display = 'none';
   clipBlob = null;
-  setTimeout(function(){ recEnd(true); }, 2000);
+  setTimeout(function(){ recEnd(true); }, 3300);
 
   if (myName) rankSubmit(myName, d, function(){});
 
@@ -1818,7 +1820,7 @@ function die(atX, atZ){
   overTimer = setTimeout(function(){
     overEl.classList.add('on');
     overTimer = null;
-  }, 2300);
+  }, 3600);
 }
 
 reset();
