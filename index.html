@@ -4,6 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>지네 못 걷기</title>
+<meta property="og:type" content="website">
+<meta property="og:title" content="지네 못 걷기">
+<meta property="og:url" content="https://aaffffffffff123-lang.github.io/jine/">
+<meta property="og:image" content="https://aaffffffffff123-lang.github.io/jine/preview.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="풀밭 길에 선 알록달록한 지네가 3과 4를 떠올린다.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="지네 못 걷기">
+<meta name="twitter:image" content="https://aaffffffffff123-lang.github.io/jine/preview.jpg">
+<meta name="twitter:image:alt" content="풀밭 길에 선 알록달록한 지네가 3과 4를 떠올린다.">
 <script>
 (() => {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
@@ -150,8 +162,8 @@
     border-radius:32px; font-size:21px; line-height:1.38; }
   #tails { position:fixed; left:0; top:0; width:100%; height:100%; z-index:10; pointer-events:none; display:none; overflow:visible; }
   /* 시작 화면 · 다시 보기 — 키캡 버튼 */
-  #titleScr { position:fixed; inset:0; z-index:12; display:none; flex-direction:column; align-items:center; justify-content:center; gap:18px;
-    background:radial-gradient(ellipse at 50% 46%, rgba(253,246,228,.62), rgba(253,246,228,.18) 72%); }
+  #titleScr { position:fixed; inset:0; z-index:12; display:none; flex-direction:column; align-items:center; justify-content:space-between;
+    padding: max(22vh, env(safe-area-inset-top)) 10px max(8vh, calc(14px + env(safe-area-inset-bottom))); }
   #titleScr h1 { font-family:"Bagel Fat One","Apple SD Gothic Neo","Malgun Gothic","Noto Sans CJK KR",sans-serif; font-weight:900; font-synthesis:none;
     font-size:clamp(46px, 13.5vw, 84px); line-height:1; color:var(--ink); letter-spacing:-1px; white-space:nowrap;
     text-shadow:0 3px 0 var(--paper), 3px 0 0 var(--paper), -3px 0 0 var(--paper), 0 -3px 0 var(--paper), 2px 2px 0 var(--paper), -2px 2px 0 var(--paper), 2px -2px 0 var(--paper), -2px -2px 0 var(--paper), 0 9px 0 rgba(38,25,15,.22); }
@@ -164,8 +176,10 @@
     transition:transform .08s cubic-bezier(.2,1.9,.4,1), box-shadow .08s; }
   .keybtn:active .kc, .keybtn.down .kc { transform:translateY(8px); transition-duration:.03s;
     box-shadow:0 0 0 3px var(--ink), 0 2px 0 0 #c7a227, 0 2px 0 3px var(--ink), 0 5px 3px 1px rgba(38,25,15,.25); }
-  #titleArt { display:block; width:min(560px, 88vw); height:auto; max-height:30vh; }
-  #titleBtns { display:flex; flex-direction:column; align-items:center; gap:6px; margin-top:6px; }
+  #titleBtns { display:flex; align-items:center; justify-content:center; gap:16px; }
+  #titleBtns #go .kc { min-width:clamp(120px, 42vw, 176px); }
+  #skipScene { position:fixed; z-index:11; right:calc(18px + env(safe-area-inset-right)); bottom:calc(116px + env(safe-area-inset-bottom)); }
+  #skipScene .kc { font-size:16px; }
   /* 작은 키캡 (결과창 · 순위) — 종이색 */
   .keybtn.sm { padding-bottom:9px; }
   .keybtn.sm .kc { min-width:0; font-size:21px; padding:9px 20px 11px; border-radius:14px;
@@ -216,7 +230,12 @@
     #top { left:50%; right:auto; width:700px; transform:translateX(-50%); }
     .lg { font-size:36px; }
   }
-  @media (max-height:560px){ #titleArt { max-height:24vh; } #titleScr { gap:10px; } #titleScr h1 { font-size:clamp(38px, 10vw, 64px); } }
+  @media (max-height:560px){
+    #titleScr { padding-top:max(9vh, env(safe-area-inset-top)); padding-bottom:max(4vh, calc(8px + env(safe-area-inset-bottom))); }
+    #titleScr h1 { font-size:clamp(36px, 12vh, 64px); }
+    #titleBtns #go .kc { padding:8px 24px 10px; font-size:24px; }
+  }
+  @media (max-height:620px){ #skipScene { bottom:calc(90px + env(safe-area-inset-bottom)); } }
   @media (max-height:620px){ .pad { height:70px; } .lg { font-size:25px; }
     #top { padding-top:calc(8px + env(safe-area-inset-top)); gap:11px; } #dist { font-size:27px; } }
 </style>
@@ -305,46 +324,9 @@
 <div id="nar2" class="nar"></div>
 <div id="balloon"><div id="balloonTx"></div></div>
 <svg id="tails"><path id="tailFill" fill="#fffdf6" stroke="none"/><path id="tailPath" fill="none" stroke="#26190f" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/></svg>
+<button id="skipScene" class="keybtn sm paper" type="button" hidden><span class="kc">건너뛰기</span></button>
 <div id="titleScr">
   <h1>지네 못 걷기</h1>
-  <svg id="titleArt" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 270" role="img" aria-labelledby="titleArtName titleArtDesc">
-    <title id="titleArtName">지네, 여우, 소</title>
-    <desc id="titleArtDesc">세 캐릭터가 어깨를 나란히 하고 웃고 있다.</desc>
-    <g stroke="#26190f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="52" cy="165" r="27" fill="#5590c0"/>
-      <circle cx="75" cy="158" r="30" fill="#8aad42"/>
-      <circle cx="99" cy="151" r="34" fill="#e8a03a"/>
-      <ellipse cx="159" cy="145" rx="72" ry="67" fill="#de6142"/>
-      <path d="M131 87 Q111 55 104 31 M181 83 Q200 51 220 39" fill="none"/>
-      <circle cx="103" cy="30" r="5" fill="#26190f" stroke="none"/>
-      <circle cx="221" cy="38" r="5" fill="#26190f" stroke="none"/>
-      <ellipse cx="134" cy="133" rx="5" ry="7" fill="#1d140d" stroke="none"/>
-      <ellipse cx="182" cy="131" rx="5" ry="7" fill="#1d140d" stroke="none"/>
-      <path d="M128 167 Q153 189 187 162" fill="none" stroke-width="3.5"/>
-      <path d="M301 99 L301 27 Q304 18 312 27 L341 70 Z" fill="#c8612a"/>
-      <path d="M398 95 L423 28 Q429 21 430 32 L426 120 Z" fill="#c8612a"/>
-      <path d="M309 80 L310 40 L334 77 Z M407 79 L422 44 L416 103 Z" fill="#f3cfae" stroke="none"/>
-      <path d="M288 135 Q291 85 346 73 Q387 65 429 109 Q449 143 427 183 Q406 211 355 212 Q306 209 290 176 Q281 157 288 135 Z" fill="#e27b3a"/>
-      <path d="M312 157 Q332 143 357 158 Q388 142 413 157 Q412 191 360 195 Q316 194 312 157 Z" fill="#faf1e2" stroke="none"/>
-      <ellipse cx="329" cy="132" rx="5" ry="6" fill="#1d140d" stroke="none"/>
-      <ellipse cx="392" cy="132" rx="5" ry="6" fill="#1d140d" stroke="none"/>
-      <path d="M344 158 Q359 151 374 158 L361 172 Z" fill="#1d140d" stroke-width="2"/>
-      <path d="M361 172 Q347 184 335 172 M361 172 Q373 186 388 173" fill="none" stroke-width="3"/>
-      <path d="M503 91 Q484 85 474 67 Q476 59 485 60 Q501 78 512 77" fill="#efe2c4"/>
-      <path d="M626 75 Q644 76 653 58 Q664 54 665 64 Q654 89 633 95" fill="#efe2c4"/>
-      <path d="M507 113 Q485 90 466 96 Q451 105 469 130 Q487 142 505 131" fill="#fbf8f1"/>
-      <path d="M627 111 Q650 91 668 101 Q682 113 664 134 Q644 145 626 130" fill="#fbf8f1"/>
-      <path d="M496 145 Q497 72 568 67 Q645 64 651 140 Q650 211 572 216 Q501 214 496 145 Z" fill="#fbf8f1"/>
-      <path d="M508 126 Q515 80 544 78 Q566 76 571 99 Q565 127 539 143 Q514 155 508 126 Z" fill="#2a1c12" stroke="none"/>
-      <path d="M626 171 Q652 146 641 120 Q622 125 610 150 Z" fill="#2a1c12" stroke="none"/>
-      <ellipse cx="542" cy="140" rx="5" ry="7" fill="#1d140d" stroke="none"/>
-      <ellipse cx="603" cy="139" rx="5" ry="7" fill="#1d140d" stroke="none"/>
-      <ellipse cx="574" cy="181" rx="55" ry="30" fill="#eda7a2"/>
-      <ellipse cx="552" cy="178" rx="5" ry="7" fill="#7a3a32" stroke="none"/>
-      <ellipse cx="595" cy="177" rx="5" ry="7" fill="#7a3a32" stroke="none"/>
-      <path d="M548 193 Q574 210 600 191" fill="none" stroke-width="3"/>
-    </g>
-  </svg>
   <div id="titleBtns">
     <button id="go" class="keybtn" type="button"><span class="kc">시작</span></button>
     <button id="rankBtn2" class="keybtn sm paper" type="button"><span class="kc">순위</span></button>
@@ -1490,10 +1472,26 @@ function freshState(){
     cPitch:0, cPitchT:0, cYaw:0, cYawT:0, cLift:0, cLiftT:0, cTwitch:0, cBlink:0, playT0:0, fromIntro:false,
     nAsk:-1, nQ1:-1, nQ2:-1, nM1:-1, nM2:-1, fkShown:-1,
     foxIn:false, foxStopX:0, foxStep:0, flinched:false, twitched:false, popped:false, closed:false,
-    overShown:false, newBest:false, botT:0,
+    allowSkip:false, outroSkipped:false, overShown:false, newBest:false, botT:0,
   };
 }
 const S = freshState();
+// 이 배포에서 시작한 판만 센다. 같은 판의 인트로와 엔딩은 같은 권한을 쓴다.
+const RUNS_KEY = 'jine_runs_20261120';
+let runsStarted = 0;
+function enterIntro(){
+  if (S.phase !== 'title') return;
+  if (!CAPTURE){
+    try {
+      const stored = Number(localStorage.getItem(RUNS_KEY));
+      if (Number.isSafeInteger(stored)) runsStarted = Math.max(runsStarted, stored);
+    } catch (e) {}
+    S.allowSkip = runsStarted > 0;
+    runsStarted++;
+    try { localStorage.setItem(RUNS_KEY, String(runsStarted)); } catch (e) {}
+  }
+  S.phase = 'intro'; S.ct = 0;
+}
 // 발이 디딘 만큼만 몸이 나간다 (인트로) — 누른 다리가 앞으로 뻗어 디딘 뒤(SWING_T), 그 다리가 땅을 밀어 몸을 STRIDE 만큼 옮긴다(PUSH_T)
 // 게임 중엔 속도(관성)로 나가고, 다리는 몸을 따라 한 발씩 옮겨 딛는다 — 누른 번호의 다리는 그때 크게 앞으로 뻗는다
 const STRIDE = 0.42, REACH = 0.62, SWING_T = 0.12, PUSH_T = 0.22, CATCH = 1.12;
@@ -2368,7 +2366,9 @@ function startPlay(fromIntro){
   cow.g.visible = true;
   for (const L of cow.legs){ L.foot.x = cow.x + L.hip[0] + (L.front ? 1 : -1); L.sw = null; L.lift = 0; }
   renderPattern();
-  if (fromIntro){ sfx('swish', 1); S.cPitchT = 0; S.cYawT = 0; S.cLiftT = 0; }
+  if (fromIntro) sfx('swish', 1);
+  S.cPitchT = 0; S.cYawT = 0; S.cLiftT = 0; S.cBlink = 0;
+  S.pushes.length = 0;
   fox.show = false;
 }
 // 엔딩 — 밟힌 건 바로, 그 뒤 칸이 닫히고 내레이션 두 상자
@@ -2378,13 +2378,29 @@ function endingUpdate(dt){
   S.nM1 = runLine('m1', ET.m1, t);
   S.nM2 = runLine('m2', ET.m2, t);
   // 교훈 컷까지 다 본 뒤 결과창 — 녹화도 여기서 끝
-  if (t >= ET.end && !S.overShown){ S.overShown = true; showOver(); }
+  if (t >= ET.end && !S.overShown) showOver();
 }
 
 // ── 화면 위 글자 · 칸
 const elFrame = document.getElementById('frame'), elNar1 = document.getElementById('nar1'), elNar2 = document.getElementById('nar2');
 const elBal = document.getElementById('balloon'), elBalTx = document.getElementById('balloonTx'), elTails = document.getElementById('tails'), elTail = document.getElementById('tailPath'), elTailFill = document.getElementById('tailFill');
 const elTitle = document.getElementById('titleScr'), elTop = document.getElementById('top');
+const skipBtn = document.getElementById('skipScene');
+function canSkipScene(){
+  return S.allowSkip && (S.phase === 'intro' || (S.dead && !S.overShown));
+}
+skipBtn.addEventListener('click', () => {
+  if (!canSkipScene()) return;
+  sfx('keyUp');
+  if (S.phase === 'intro'){
+    startPlay(false);
+  } else {
+    S.outroSkipped = true;
+    S.nM1 = S.nM2 = -1;
+    showOver();
+  }
+  cineUI();
+});
 const _esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
 function putText(el, key, n){
   if (n < 0){ if (el.style.display !== 'none') el.style.display = 'none'; el._k = null; return; }
@@ -2396,6 +2412,8 @@ function putText(el, key, n){
 }
 const _bv = new THREE.Vector3();
 function cineUI(){
+  const hideSkip = !canSkipScene();
+  if (skipBtn.hidden !== hideSkip) skipBtn.hidden = hideSkip;
   const root = document.documentElement.style;
   // 칸: 0 열림 ~ 1 닫힘
   let fk = 0;
@@ -2909,12 +2927,12 @@ function updateCamera(dt){
   const camKT = S.phase === 'play' && !S.dead ? clamp(1 - S.gapM / 30, 0, 1) : 0;
   S.camK += (camKT - S.camK) * Math.min(1, dt * 2.5);
   const focusX = S.headX - (portrait ? 3.55 + 1.5 * S.camK : 5.6 + 2.2 * S.camK);
-  S.camX = S.mode === 'side' ? S.camX + (focusX - S.camX) * Math.min(1, dt * 6) : focusX;
+  S.camX = S.mode === 'side' && S.phase !== 'title' ? S.camX + (focusX - S.camX) * Math.min(1, dt * 6) : focusX;
   if (S.mode === 'side'){
     const fov = portrait ? 44 : 30;
     camera.fov = fov;
     const tanH = Math.tan(fov / 2 * D2R) * camera.aspect;
-    const span = portrait ? 10.2 + 2.2 * S.camK : 21 + 3 * S.camK;
+    const span = portrait ? (S.phase === 'title' ? 12.6 : 10.2 + 2.2 * S.camK) : 21 + 3 * S.camK;
     const D = span / 2 / tanH;
     const elev = (portrait ? 28 : 24) * D2R;
     _cp.set(S.camX, 0.4, 0.15);
@@ -3014,6 +3032,7 @@ function botUpdate(dt){
 }
 
 function tick(dt){
+  if (S.outroSkipped) return;
   const slow = S.dead && S.deadT < 0.4 ? 0.3 : 1;
   const d = dt * slow;
   S.clock += dt; S.time += d;
@@ -3234,6 +3253,7 @@ function saveClip(){
 
 // ───────────────────────── 결과창 · 다시
 function showOver(){
+  S.overShown = true;
   const d = Math.floor(S.dist);
   document.getElementById('score').innerHTML = d + '<span>m</span>';
   const parts = [];
@@ -3288,13 +3308,13 @@ function resetGame(){
   lastCombo = -1; gapNum._m = null;
   S.pat = makePattern(); renderPattern();
   for (let i = 0; i < 4; i++) tick(1 / 30);
-  S.phase = 'intro'; S.ct = 0;
+  enterIntro();
 }
 function begin(){
   if (S.phase !== 'title') return;
   audioOn(); sfx('keyDown');
   setTimeout(() => sfx('keyUp'), 70);
-  S.phase = 'intro'; S.ct = 0;
+  enterIntro();
 }
 
 // ───────────────────────── 시작
@@ -3355,8 +3375,8 @@ document.getElementById('again').addEventListener('click', () => { audioOn(); sf
 saveBtn.addEventListener('click', () => { sfx('keyUp'); saveClip(); });
 nameIn.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') nameIn.blur(); });
 // 컷신 중엔 아무 데나 눌러도 넘어가지 않는다 — 눌린 건 전해졌다는 표시로 화면만 살짝 흔들린다
-document.addEventListener('pointerdown', () => {
-  if (S.phase === 'title') return;
+document.addEventListener('pointerdown', e => {
+  if (S.phase === 'title' || skipBtn.contains(e.target)) return;
   audioOn();
   if (S.phase === 'intro' || (S.dead && !S.overShown)) S.shake = Math.max(S.shake, 0.18);
 }, { passive:true });
