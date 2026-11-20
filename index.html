@@ -72,7 +72,7 @@
     box-shadow:0 0 0 2.5px var(--ink), 0 3px 0 0 var(--skirt), 0 3px 0 2.5px var(--ink); }
   #best b { color:var(--ink); font-weight:inherit; margin-left:3px; }
   #best.off { visibility:hidden; }
-  /* 소와의 거리 — 옆에서 본 작은 길. 소가 지네 뒤를 따라오고, 둘 사이를 잰 치수선과 남은 m 가 줄어든다 */
+  /* 소와의 거리 — 옆에서 본 작은 길. 소가 지네 뒤를 따라오고, 둘 사이를 잰 치수선과 남은 cm가 줄어든다 */
   #threatrow { position:relative; height:46px; border-radius:14px; overflow:hidden;
     background:linear-gradient(180deg, #fffcf4 0%, var(--paper) 78%, #efe0bd 78.5%, #ead8b0 100%);
     box-shadow:0 0 0 3px var(--ink), 0 5px 0 0 var(--skirt), 0 5px 0 3px var(--ink), 0 9px 6px 1px rgba(38,25,15,.22); }
@@ -85,6 +85,7 @@
   #gapLine::before { content:''; position:absolute; left:2px; right:2px; top:5px; height:2.5px; background:currentColor; }
   #gapLine::after, #gapLine i { content:''; position:absolute; top:0; width:2.5px; height:12px; border-radius:2px; background:currentColor; }
   #gapLine::after { right:0; } #gapLine i { left:0; }
+  #gapLine.closed::before, #gapLine.closed::after, #gapLine.closed i { display:none; }
   #gapNum { position:absolute; left:50%; bottom:100%; margin-bottom:0; transform:translateX(-50%); white-space:nowrap; font-size:13px; line-height:15px;
     color:currentColor; padding:0 3px; font-family:"Bagel Fat One","Apple SD Gothic Neo","Malgun Gothic","Noto Sans CJK KR",sans-serif;
     font-weight:900; font-synthesis:none; }
@@ -237,13 +238,13 @@
 
 <div id="top">
   <div id="hudrow">
-    <div id="distwrap"><div id="dist">0<span>m</span></div><div id="combo" class="off">×0</div></div>
+    <div id="distwrap"><div id="dist">0<span>cm</span></div><div id="combo" class="off">×0</div></div>
     <div id="best" class="off"></div>
   </div>
   <div id="threatrow">
     <div class="road"></div>
     <div id="hoofs"></div>
-    <div id="gapLine"><i></i><b id="gapNum">0m</b></div>
+    <div id="gapLine"><i></i><b id="gapNum">0cm</b></div>
     <svg id="cowIc" viewBox="0 0 50 34" aria-hidden="true">
       <defs><clipPath id="cowBodyClip"><rect x="5" y="9" width="30" height="15" rx="7.5"/></clipPath></defs>
       <path d="M6.5 13 Q2.5 14 2.6 21" fill="none" stroke="#26190f" stroke-width="1.6" stroke-linecap="round"/>
@@ -315,7 +316,7 @@
 <div id="over">
   <div id="panel">
     <div id="scoreLabel">이번 기록</div>
-    <div id="score">0<span>m</span></div>
+    <div id="score">0<span>cm</span></div>
     <div id="sub"></div>
     <button id="again" class="keybtn sm" type="button"><span class="kc">다시</span></button>
   </div>
@@ -1415,16 +1416,16 @@ function updateGoo(dt){
 }
 
 // ───────────────────────── 상태
-// 게임 규칙은 원래 게임 그대로 — 속도·거리는 m, 화면 속 한 칸(월드 단위)은 3.2m
-const MPU = 3.2;
+// 길이 기준: 지네 몸통(약 7.4 월드 단위)이 약 24cm. 속도는 cm/s, 이동 기록은 cm.
+const CM_PER_WORLD_UNIT = 3.2;
 const IMPULSE = 4.0, DRAG = 1.55, BASE_FRICTION = 0.9, MAXSPD = 14, START_SPD = 3.5;
 const GRACE = 0.3;        // 순서가 바뀐 직후 잘못 누른 건 무시
 const WARN_LEAD = 1.2;    // 바뀌기 전 미리 알림 (반 마디)
 const FALL_T = 0.5;       // 꼬여 넘어져 있는 동안은 눌러도 안 먹는다
-const COW_START_GAP = 60; // 시작할 때 소 발굽 ~ 지네 꽁무니 (m)
+const COW_START_GAP_CM = 60; // 시작할 때 예상 착지점 ~ 지네 꽁무니 (cm)
 const HOOF_FRONT = 2.0;   // 발굽 디딘 자리 ~ 발굽 앞코
 const IMPACT_OFF = 5.2 + HOOF_FRONT;   // 소 몸 기준점 ~ 앞발굽 앞코
-const KILL_R = 1.05 / MPU;             // 발굽 앞코가 꽁무니 이만큼 안까지 들어오면 밟힌다 (원래 게임 1.05m)
+const KILL_R = 1.05 / CM_PER_WORLD_UNIT;             // 발굽 앞코가 꽁무니 이만큼 안까지 들어오면 밟힌다 (1.05cm)
 // 소 발굽 박자 — 보사노바 클라베 (100BPM)
 const SIXT = 60 / 100 / 4, BAR = SIXT * 16, CLAVE = [0, 3, 6, 10, 13];
 const CUT_EVERY = BAR * 4, CUT_HOLD = BAR;   // 네 마디마다 한 마디 동안 소 쪽을 돌아본다
@@ -1436,7 +1437,7 @@ function freshState(){
     pat:[0, 1], idx:0, patSeq:0, patBar:0, barSeen:-1, warned:false,
     impW:-60, cowVelW:0, stompIdx:0, nextStomp:0, threatStomp:-1, lunge:0, lungeT:0,
     cutT:0, wide:false, mode:'side', shake:0, tangle:0, dead:false, deadT:0, hitX:0, camX:-3.5, camK:0,
-    flash:[0, 0, 0, 0], padHold:[0, 0, 0, 0], pushes:[], gapReal:44, gapM:COW_START_GAP, cowBump:0, poolR:0,
+    flash:[0, 0, 0, 0], padHold:[0, 0, 0, 0], pushes:[], gapReal:44, stompGapCm:COW_START_GAP_CM, cowBump:0, poolR:0,
     // 장면 단계: title(시작 화면) → intro(컷신) → play(게임, 밟히면 엔딩)
     phase:'title', ct:0, shot:0, fired:{}, flashed:[], legWig:[0, 0, 0, 0], walkIdx:0, nextWalk:0.1,
     cPitch:0, cPitchT:0, cYaw:0, cYawT:0, cLift:0, cLiftT:0, cTwitch:0, cBlink:0, playT0:0, fromIntro:false,
@@ -1999,8 +2000,8 @@ function sfxAt(tS, name, ...args){
 }
 function musicUpdate(dt){
   if (!MUSIC || S.phase !== 'play' || S.dead || MZ.cut) return;
-  // 긴장 — 소 발굽과 꽁무니 사이 거리 (75m 넘게 떨어지면 0, 10m 안이면 1). 천천히 따라간다
-  const Tt = clamp(1 - (S.gapM - 10) / 65, 0, 1);
+  // 긴장 — 소 발굽과 꽁무니 사이 거리 (75cm 넘게 떨어지면 0, 10cm 안이면 1). 천천히 따라간다
+  const Tt = clamp(1 - (S.stompGapCm - 10) / 65, 0, 1);
   MZ.T += (Tt - MZ.T) * Math.min(1, dt * 0.9);
   const g0 = S.playT0 + 0.3;
   if (MZ.k < 0) MZ.k = 0;
@@ -2018,15 +2019,15 @@ function musicStep(k, tq){
     if (cs[ci].length === 0 && (MZ.cell && MZ.cell.length === 0)) ci = (ci + 1) % cs.length;   // 두 마디 내리 쉬지 않게
     MZ.cell = cs[ci];
   }
-  const zone = MZ.zone, gapM = S.gapM;
+  const zone = MZ.zone, gapCm = S.stompGapCm;
   // 소 발굽 — 클라베 자리, 화음 근음으로 울리는 북 (지네를 노리고 내려오는 발굽은 디딜 때 따로 울린다)
   const ci = CLAVE.indexOf(pos);
   if (ci >= 0){
     const i = bar * 5 + ci;
-    if (i !== S.threatStomp) sfxAt(tq, 'stomp', clamp(1.1 - gapM / 90, 0.35, 1), ci === 0, mHz(P.r));
+    if (i !== S.threatStomp) sfxAt(tq, 'stomp', clamp(1.1 - gapCm / 90, 0.35, 1), ci === 0, mHz(P.r));
   }
   // 워낭 — 1·3박
-  if (pos === 0 || pos === 8) sfxAt(tq, 'bell', 0.3 + 0.7 / (1 + gapM * 0.04), pos === 0);
+  if (pos === 0 || pos === 8) sfxAt(tq, 'bell', 0.3 + 0.7 / (1 + gapCm * 0.04), pos === 0);
   // 베이스
   for (const [p, w, v, dur] of BASS[zone]){
     if (p !== pos) continue;
@@ -2066,12 +2067,12 @@ const padEls = [...document.querySelectorAll('.pad')];
 const distEl = document.getElementById('dist'), comboEl = document.getElementById('combo');
 const threatRow = document.getElementById('threatrow'), cowIc = document.getElementById('cowIc'), gapLine = document.getElementById('gapLine'), gapNum = document.getElementById('gapNum'), hoofs = document.getElementById('hoofs');
 const bestEl = document.getElementById('best'), centIc = document.getElementById('centIc'), vignEl = document.getElementById('vign');
-// 최고 기록 — 이 브라우저에 남은 기록 (캡처 때는 주소의 best 값)
+// jine_best는 이동 점수를 정수로 저장한다. 예전 기록도 같은 비율로 cm로 읽는다.
 let best = 0;
 try { best = parseInt(localStorage.getItem('jine_best') || '0', 10) || 0; } catch (e) {}
 if (CAPTURE) best = parseInt(Q.get('best') || '0', 10) || 0;
 function renderBest(){
-  if (best > 0){ bestEl.innerHTML = '내 최고<b>' + best + 'm</b>'; bestEl.classList.remove('off'); }
+  if (best > 0){ bestEl.innerHTML = '내 최고<b>' + best + 'cm</b>'; bestEl.classList.remove('off'); }
   else bestEl.classList.add('off');
 }
 renderBest();
@@ -2085,7 +2086,7 @@ function threatColor(th){
     }
   }
 }
-const GAP_FULL_M = 120;   // 거리 막대 한쪽 끝 = 120m
+const GAP_FULL_CM = 120;   // 거리 막대 한쪽 끝 = 120cm
 let lastCombo = 0;
 padEls.forEach((el, i) => { el.style.setProperty('--hi', KEYC[i].hi); el.style.setProperty('--top', KEYC[i].top); el.style.setProperty('--side', KEYC[i].side); });
 // 말풍선 속 순서 — 길이가 바뀌면 키캡을 새로 만든다
@@ -2156,16 +2157,16 @@ function updateHud(dt){
     bubbleEl.style.left = (W / 2) + 'px'; bubbleEl.style.top = (tb + 16 + bh) + 'px';
   }
   if (S.tangle <= 0.35) bubbleEl.classList.remove('tangled');
-  distEl.innerHTML = Math.floor(S.dist) + '<span>m</span>';
+  distEl.innerHTML = Math.floor(S.dist) + '<span>cm</span>';
   if (S.combo !== lastCombo){
     comboEl.textContent = '×' + S.combo;
     comboEl.classList.toggle('off', S.combo <= 0);
     if (S.combo > lastCombo){ comboEl.classList.remove('pop'); void comboEl.offsetWidth; comboEl.classList.add('pop'); }
     lastCombo = S.combo;
   }
-  // 소 발굽 앞코 ~ 지네 꽁무니 — 0m 가 되면 밟힌다
-  const gapM = S.gapM;
-  const near = 1 - clamp(gapM / GAP_FULL_M, 0, 1);
+  // 길을 딛는 앞발의 현재 위치로 잰 수평거리. 공중에 든 발도 지면에 투영한다.
+  const gapCm = playing ? hoofGapCm() : S.stompGapCm;
+  const near = 1 - clamp(gapCm / GAP_FULL_CM, 0, 1);
   const rw = threatRow.clientWidth, cw = 50, tail = rw - 6 - 44;      // 지네 꼬리 x
   const cx = near * (tail - cw + 3);
   S.cowBump = Math.max(0, S.cowBump - dt * 5);
@@ -2174,16 +2175,16 @@ function updateHud(dt){
   hoofs.style.width = Math.max(0, cx + 6).toFixed(1) + 'px';
   const gx0 = cx + cw + 2, gx1 = tail - 2, gw = Math.max(0, gx1 - gx0);
   gapLine.style.left = gx0.toFixed(1) + 'px'; gapLine.style.width = gw.toFixed(1) + 'px';
-  gapLine.style.visibility = gw > 6 ? 'visible' : 'hidden';
-  const m = Math.round(gapM);
-  if (gapNum._m !== m){ gapNum.textContent = m + 'm'; gapNum._m = m; }
+  gapLine.classList.toggle('closed', gw <= 6);
+  const cm = Math.ceil(gapCm);
+  if (gapNum._cm !== cm){ gapNum.textContent = cm + 'cm'; gapNum._cm = cm; }
   gapLine.style.color = threatColor(near);
   // 지네는 소가 가까우면 떤다
   const fear = clamp((near - 0.72) / 0.28, 0, 1);
   centIc.style.transform = 'translateX(' + (Math.sin(S.time * 63) * 1.4 * fear).toFixed(2) + 'px)';
   gapNum.style.transform = 'translateX(-50%) translateX(' + (Math.sin(S.time * 71) * 1.1 * fear).toFixed(2) + 'px)';
   // 소 쪽이 어두워진다 (바짝 붙었을 때만)
-  const vg = playing && S.mode === 'side' ? clamp((9 - gapM) / 9, 0, 1) * 0.34 : 0;
+  const vg = playing && S.mode === 'side' ? clamp((9 - gapCm) / 9, 0, 1) * 0.34 : 0;
   if (vignEl._v !== vg){ vignEl._v = vg; vignEl.style.opacity = vg.toFixed(3); }
   // 캡처용 자동 누르기도 패드가 눌렸다 올라온다
   padEls.forEach((el, i) => {
@@ -2325,14 +2326,14 @@ function startPlay(fromIntro){
   if (S.phase === 'play') return;
   S.phase = 'play'; S.t = 0; S.playT0 = S.time; S.fromIntro = fromIntro;
   S.mode = 'side'; S.camX = S.headX - 3.55;
-  // 원래 게임 그대로 — 시속 3.5m 로 시작, 소는 꽁무니 60m 뒤
+  // 초속 3.5cm로 시작하고, 첫 예상 착지점은 꽁무니에서 60cm 뒤다.
   S.speed = START_SPD; S.dist = 0; S.combo = 0; S.falls = 0; S.fallT = 0; S.tangle = 0;
   S.idx = 0; S.grace = GRACE; S.patBar = 0; S.barSeen = -1; S.warned = false;
   S.cutT = 0; S.wide = false; S.botT = 0.35;
   S.stompIdx = 0; S.nextStomp = S.playT0 + stompTime(0); S.threatStomp = -1; S.lunge = 0; S.lungeT = 0;
-  S.impW = cent.segs[SEG_N - 1].x - COW_START_GAP / MPU;
-  S.cowVelW = 5.4 / MPU;
-  cow.x = S.impW - IMPACT_OFF; S.gapReal = S.headX - cow.x; S.gapM = COW_START_GAP;
+  S.impW = cent.segs[SEG_N - 1].x - COW_START_GAP_CM / CM_PER_WORLD_UNIT;
+  S.cowVelW = 5.4 / CM_PER_WORLD_UNIT;
+  cow.x = S.impW - IMPACT_OFF; S.gapReal = S.headX - cow.x; S.stompGapCm = COW_START_GAP_CM;
   cow.g.visible = true;
   for (const L of cow.legs){ L.foot.x = cow.x + L.hip[0] + (L.front ? 1 : -1); L.sw = null; L.lift = 0; }
   renderPattern();
@@ -2462,7 +2463,7 @@ function updateCentipede(dt){
     let adv = 0;
     if (S.phase === 'play'){
       // 게임 — 속도(관성)대로 나간다. 다리는 아래에서 몸을 따라 한 발씩 옮겨 딛는다
-      adv = S.speed / MPU * dt;
+      adv = S.speed / CM_PER_WORLD_UNIT * dt;
       S.dist += S.speed * dt;
     } else {
       for (const p of S.pushes){
@@ -2670,7 +2671,7 @@ function updateCow(dt){
         // 지네를 노리는 발굽은 내려오는 동안 꽁무니를 쫓아간다 — 다리가 닿는 데까지만 (모자라면 소가 한 걸음 다가선다)
         if (L.sw.threat && !S.dead){
           const rem = Math.max(0, L.sw.t1 - S.time);
-          const want = cent.segs[SEG_N - 1].x + S.speed / MPU * rem + L.sw.home;
+          const want = cent.segs[SEG_N - 1].x + S.speed / CM_PER_WORLD_UNIT * rem + L.sw.home;
           const hipLand = S.impW + S.cowVelW * rem - IMPACT_OFF + 0.6;
           S.lungeT = clamp(want - (hipLand + 6.4), 0, 3);
           L.sw.x1 = Math.min(want, hipLand + 6.4 + S.lungeT);
@@ -2689,9 +2690,9 @@ function updateCow(dt){
           if (L.sw.threat && !S.dead){
             S.threatStomp = -1;
             killed = L.foot.x + HOOF_FRONT >= cent.segs[SEG_N - 1].x - KILL_R;
-            if (!killed) sfx('stomp', clamp(1.1 - S.gapM / 90, 0.35, 1), (L.sw.i % 5) === 0, mHz(PROG[Math.floor(L.sw.i / 5) % 8].r));
+            if (!killed) sfx('stomp', clamp(1.1 - S.stompGapCm / 90, 0.35, 1), (L.sw.i % 5) === 0, mHz(PROG[Math.floor(L.sw.i / 5) % 8].r));
           }
-          if (!S.dead){ S.cowBump = 1; cowIc.classList.toggle('stepB'); if (!MUSIC && !L.sw.threat) sfx('stomp', clamp(1.1 - S.gapM / 90, 0.35, 1), (L.sw.i % 5) === 0); }
+          if (!S.dead){ S.cowBump = 1; cowIc.classList.toggle('stepB'); if (!MUSIC && !L.sw.threat) sfx('stomp', clamp(1.1 - S.stompGapCm / 90, 0.35, 1), (L.sw.i % 5) === 0); }
           if (killed) die(L.foot.x);
           L.sw = null; L.lift = 0;
         }
@@ -2738,7 +2739,7 @@ function updateCow(dt){
     const impAt = S.impW + S.cowVelW * ahead;           // 발굽 앞코가 떨어질 자리
     let tx = impAt - HOOF_FRONT, threat = false;
     if (nearLeg && S.threatStomp < 0){
-      const tailAt = cent.segs[SEG_N - 1].x + S.speed / MPU * ahead;
+      const tailAt = cent.segs[SEG_N - 1].x + S.speed / CM_PER_WORLD_UNIT * ahead;
       if (impAt >= tailAt - KILL_R){ threat = true; S.threatStomp = i; tx = tailAt + 0.45; }   // 꽁무니 쪽 몸통을 덮게
     }
     L.sw = { t0:S.time, t1:landT, x0:L.foot.x, z0:L.foot.z, x1:tx, z1:L.hip[2] + (threat ? 0.3 : 0), death:threat, threat, home:0.45, i };
@@ -2893,7 +2894,7 @@ function updateCamera(dt){
     LC.pos.copy(CC.pos); LC.look.copy(CC.look); LC.fov = CC.fov;
   }
   // 소가 바짝 붙으면 카메라가 조금 물러나 뒤쪽(발굽이 떨어지는 자리)까지 보여 준다
-  const camKT = S.phase === 'play' && !S.dead ? clamp(1 - S.gapM / 30, 0, 1) : 0;
+  const camKT = S.phase === 'play' && !S.dead ? clamp(1 - S.stompGapCm / 30, 0, 1) : 0;
   S.camK += (camKT - S.camK) * Math.min(1, dt * 2.5);
   const focusX = S.headX - (portrait ? 3.55 + 1.5 * S.camK : 5.6 + 2.2 * S.camK);
   S.camX = S.mode === 'side' && S.phase !== 'title' ? S.camX + (focusX - S.camX) * Math.min(1, dt * 6) : focusX;
@@ -2955,7 +2956,7 @@ function gameUpdate(dt){
   if (S.grace > 0) S.grace -= dt;
   S.tangle = Math.max(0, S.tangle - dt / 0.75);
   // 소 — 멀리 갈수록 조금씩 빨라진다
-  S.cowVelW = (5.4 + S.dist * 0.004) / MPU;
+  S.cowVelW = (5.4 + S.dist * 0.004) / CM_PER_WORLD_UNIT;
   S.impW += S.cowVelW * dt;
   // 마디 — 순서는 마디 첫 박에서만 바뀌고, 반 마디 전에 미리 알린다
   const g0 = S.playT0 + 0.3;
@@ -2967,7 +2968,7 @@ function gameUpdate(dt){
   const wideNow = (S.cutT % CUT_EVERY) > (CUT_EVERY - CUT_HOLD);
   if (wideNow !== S.wide){
     S.wide = wideNow; sfx('cut');
-    if (wideNow) sfx('moo', Math.max(0.35, 1 / (1 + (S.gapM + 8.4) * 0.035)));
+    if (wideNow) sfx('moo', Math.max(0.35, 1 / (1 + (S.stompGapCm + 8.4) * 0.035)));
     wrapWorld(180);
   }
   wrapWorld(300);
@@ -2978,15 +2979,21 @@ function gameUpdate(dt){
 function wrapWorld(lim){
   if (S.headX - world.position.x > lim) world.position.x += 200;
 }
-// 소 발굽 앞코 ~ 지네 꽁무니 (m)
+function hoofGapCm(){
+  const hoof = cow.legs[0].hoof; // 길 위에 있는 앞발
+  const toeX = cow.g.position.x + hoof.position.x + HOOF_FRONT * Math.cos(hoof.rotation.z);
+  const tailEdgeX = cent.segs[SEG_N - 1].x - KILL_R;
+  return Math.max(0, tailEdgeX - toeX) * CM_PER_WORLD_UNIT;
+}
+// 추격 속도와 박자에 쓰는 다음 착지 기준점 ~ 꽁무니 거리 (cm)
 function updateGap(){
-  if (S.phase === 'play' && !S.dead) S.gapM = Math.max(0, (cent.segs[SEG_N - 1].x - S.impW) * MPU);
+  if (S.phase === 'play' && !S.dead) S.stompGapCm = Math.max(0, (cent.segs[SEG_N - 1].x - S.impW) * CM_PER_WORLD_UNIT);
   S.gapReal = S.headX - cow.x;
 }
 // 캡처(자동 확인)용 손 — 정한 빠르기로 순서대로 누르고, 가끔 틀리고, 정한 시각부터 손을 놓는다
 const BOT = CAPTURE ? { rate:+(Q.get('bot') || 5), miss:+(Q.get('bmiss') || 0), stop:+(Q.get('bstop') || 1e9), fade:+(Q.get('bfade') || 0), rescue:+(Q.get('brescue') || 0) } : null;
 function botUpdate(dt){
-  const panic = BOT && BOT.rescue && S.gapM < BOT.rescue;   // 소가 바짝 붙으면 다시 미친 듯이 누른다 (달아나기 확인용)
+  const panic = BOT && BOT.rescue && S.stompGapCm < BOT.rescue;   // 소가 바짝 붙으면 다시 미친 듯이 누른다 (달아나기 확인용)
   if (!BOT || S.phase !== 'play' || S.dead || (S.t > BOT.stop && !panic)) return;
   S.botT -= dt;
   if (S.botT > 0) return;
@@ -3036,7 +3043,7 @@ function placeCentipede(x){
   for (const L of cent.legs){ L.init = false; L.sw = null; }
 }
 
-// ───────────────────────── 밟히는 장면 녹화 — 소가 16m 안으로 들어오면 돌리기 시작해서 교훈 컷이 끝날 때까지
+// ───────────────────────── 밟히는 장면 녹화 — 소가 16cm 안으로 들어오면 돌리기 시작해서 교훈 컷이 끝날 때까지
 // 3D 화면 위에 만화 칸 · 내레이션 글자를 얹어 한 화면으로 담고, 소리(음악·효과음)도 같이 담는다
 const REC = { r:null, start:0, mime:'', blob:null, url:null, cv:null, cx:null, dest:null, w:0, h:0, game:0, fs:0 };
 function pickMime(audio){
@@ -3095,7 +3102,7 @@ function recEnd(keep){
 }
 function recWatch(){
   if (!recSupported()) return;
-  if (S.gapM < 16){
+  if (S.stompGapCm < 16){
     if (!REC.r) recBegin();
     else if (performance.now() - REC.start > 14000){ recEnd(false); recBegin(); }   // 너무 길어지면 새로 시작 — 밟히는 순간이 늘 끝쪽에 남게
   } else if (REC.r) recEnd(false);
@@ -3144,7 +3151,7 @@ function recNar(c, el, k){
 function saveClip(){
   if (!REC.blob) return;
   const ext = REC.mime.indexOf('mp4') >= 0 ? 'mp4' : 'webm';
-  const name = 'jine-' + Math.floor(S.dist) + 'm.' + ext;
+  const name = 'jine-' + Math.floor(S.dist) + 'cm.' + ext;
   try {
     const f = new File([REC.blob], name, { type:REC.blob.type });
     if (navigator.canShare && navigator.canShare({ files:[f] })){ navigator.share({ files:[f] }).catch(() => {}); return; }
@@ -3159,9 +3166,9 @@ function showOver(){
   S.overShown = true;
   const d = Math.floor(S.dist);
   document.getElementById('scoreLabel').textContent = S.newBest ? '신기록!' : '이번 기록';
-  document.getElementById('score').innerHTML = d + '<span>m</span>';
+  document.getElementById('score').innerHTML = d + '<span>cm</span>';
   const parts = [];
-  if (!S.newBest) parts.push('내 최고 ' + best + 'm');
+  if (!S.newBest) parts.push('내 최고 ' + best + 'cm');
   if (S.falls) parts.push('넘어짐 ' + S.falls + '회');
   document.getElementById('sub').textContent = parts.join(' · ');
   panelEl.classList.toggle('newbest', S.newBest);
@@ -3208,7 +3215,7 @@ function resetGame(){
   // 화면
   bubbleEl.classList.remove('tangled', 'warn'); bubbleBody.classList.remove('fresh');
   padEls.forEach(el => el.classList.remove('down', 'up', 'want', 'bad'));
-  lastCombo = -1; gapNum._m = null;
+  lastCombo = -1; gapNum._cm = null;
   S.pat = makePattern(); renderPattern();
   for (let i = 0; i < 4; i++) tick(1 / 30);
   enterIntro();
@@ -3242,7 +3249,7 @@ if (CAPTURE || Q.has('dev')) window.LOOK = {
   render(){ render(); return S.clock; },
   IT, ET, audioWav,
   state(){ return { phase:S.phase, ct:S.ct, t:S.t, dead:S.dead, deadT:S.deadT, shot:S.shot, clock:S.clock, idx:S.idx, pat:S.pat.slice(), want:S.pat[S.idx],
-                    tangle:S.tangle, fallT:S.fallT, speed:S.speed, dist:S.dist, gapM:S.gapM, combo:S.combo, falls:S.falls, wide:S.wide, mode:S.mode,
+                    tangle:S.tangle, fallT:S.fallT, speed:S.speed, dist:S.dist, gapM:S.stompGapCm, combo:S.combo, falls:S.falls, wide:S.wide, mode:S.mode,
                     headX:S.headX, impW:S.impW, cowX:cow.x, worldX:world.position.x, over:S.overShown, threat:S.threatStomp, lunge:S.lunge, hitX:S.hitX,
                     patSeq:S.patSeq, grace:S.grace, warned:S.warned, newBest:S.newBest, zone:MZ.zone, T:MZ.T }; },
   sounds(){ return sndLog.map(e => [Math.round(e.t * 100) / 100, e.name]); },
