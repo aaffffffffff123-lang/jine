@@ -206,8 +206,11 @@
   #sub { margin-top:6px; }
   #sub:empty { display:none; }
   #again { margin-top:16px; }
-  #save { display:none; position:absolute; right:calc(16px + env(safe-area-inset-right)); bottom:calc(12px + env(safe-area-inset-bottom)); }
+  #clipActions { position:absolute; right:calc(16px + env(safe-area-inset-right)); bottom:calc(12px + env(safe-area-inset-bottom)); text-align:right; }
+  #save { display:inline-block; text-decoration:none; }
   #save .kc { font-size:15px; }
+  #clipNote { margin-bottom:9px; padding:6px 9px; border-radius:8px; background:var(--paper); color:var(--ink); font-size:14px; }
+  #clipOpen { color:inherit; font-weight:bold; }
   #grain { position:fixed; inset:0; width:100%; height:100%; z-index:2; pointer-events:none; mix-blend-mode:multiply; opacity:.38; }
   @media (min-width:720px){
     #pads { grid-template-columns:repeat(2,150px) 90px repeat(2,150px); justify-content:center; }
@@ -320,7 +323,10 @@
     <div id="sub"></div>
     <button id="again" class="keybtn sm" type="button"><span class="kc">다시</span></button>
   </div>
-  <button id="save" class="keybtn sm paper" type="button"><span class="kc">영상 저장</span></button>
+  <div id="clipActions" hidden>
+    <div id="clipNote" hidden><span role="status"></span> · <a id="clipOpen" target="_blank" rel="noopener">영상 열기</a></div>
+    <a id="save" class="keybtn sm paper" download><span class="kc">밟히는 장면 저장</span></a>
+  </div>
 </div>
 
 <div id="bubble"><div id="bubbleBody"><svg id="scrib" viewBox="0 0 100 40" preserveAspectRatio="none"></svg></div></div>
@@ -3086,11 +3092,14 @@ function recBegin(){
   r.onstop = () => {
     try { r.stream.getVideoTracks().forEach(t => t.stop()); } catch (e) {}
     if (!r._keep || game !== REC.game || !chunks.length) return;
-    const blob = new Blob(chunks, { type:r._mime });
+    const blob = new Blob(chunks, { type:r.mimeType || r._mime });
     if (!blob.size) return;
     if (REC.url) URL.revokeObjectURL(REC.url);
-    REC.blob = blob; REC.url = URL.createObjectURL(blob); REC.mime = r._mime;
-    if (overEl.classList.contains('on')) saveBtn.style.display = 'inline-block';
+    REC.blob = blob; REC.url = URL.createObjectURL(blob); REC.mime = blob.type;
+    const ext = blob.type.includes('mp4') ? 'mp4' : 'webm';
+    saveBtn.href = clipOpen.href = REC.url;
+    saveBtn.download = 'jine-' + Math.floor(S.dist) + 'cm.' + ext;
+    clipActions.hidden = false;
   };
   try { r.start(); } catch (e) { return; }
   REC.r = r; REC.start = performance.now();
@@ -3148,20 +3157,9 @@ function recNar(c, el, k){
     if (show) c.fillText(show, x + padX, y + padY + lh * (i + 0.5));
   });
 }
-function saveClip(){
-  if (!REC.blob) return;
-  const ext = REC.mime.indexOf('mp4') >= 0 ? 'mp4' : 'webm';
-  const name = 'jine-' + Math.floor(S.dist) + 'cm.' + ext;
-  try {
-    const f = new File([REC.blob], name, { type:REC.blob.type });
-    if (navigator.canShare && navigator.canShare({ files:[f] })){ navigator.share({ files:[f] }).catch(() => {}); return; }
-  } catch (e) {}
-  const a = document.createElement('a'); a.href = REC.url; a.download = name;
-  document.body.appendChild(a); a.click(); a.remove();
-}
-
 // ───────────────────────── 결과창 · 다시
 const overEl = document.getElementById('over'), panelEl = document.getElementById('panel'), saveBtn = document.getElementById('save');
+const clipActions = document.getElementById('clipActions'), clipNote = document.getElementById('clipNote'), clipOpen = document.getElementById('clipOpen');
 function showOver(){
   S.overShown = true;
   const d = Math.floor(S.dist);
@@ -3172,13 +3170,17 @@ function showOver(){
   if (S.falls) parts.push('넘어짐 ' + S.falls + '회');
   document.getElementById('sub').textContent = parts.join(' · ');
   panelEl.classList.toggle('newbest', S.newBest);
-  saveBtn.style.display = 'none';
   overEl.classList.add('on');
   recEnd(true);
 }
 // 한 판을 처음부터 — 인트로부터 다시 (소리 · 악기는 그대로 둔다)
 function resetGame(){
   REC.game++; recEnd(false); REC.blob = null;
+  clipActions.hidden = true;
+  clipNote.hidden = true;
+  clipNote.firstElementChild.textContent = '';
+  saveBtn.removeAttribute('href'); clipOpen.removeAttribute('href');
+  if (REC.url){ URL.revokeObjectURL(REC.url); REC.url = null; }
   overEl.classList.remove('on'); panelEl.classList.remove('newbest');
   const clock = S.clock;
   Object.assign(S, freshState());
@@ -3277,7 +3279,11 @@ goBtn.addEventListener('pointerup', () => { goBtn.classList.remove('down'); begi
 goBtn.addEventListener('pointerleave', () => goBtn.classList.remove('down'));
 goBtn.addEventListener('click', begin);
 document.getElementById('again').addEventListener('click', () => { audioOn(); sfx('keyUp'); resetGame(); });
-saveBtn.addEventListener('click', () => { sfx('keyUp'); saveClip(); });
+saveBtn.addEventListener('click', () => {
+  clipNote.hidden = false;
+  clipNote.firstElementChild.textContent = '다운로드 요청됨';
+  sfx('keyUp');
+});
 // 컷신 중엔 아무 데나 눌러도 넘어가지 않는다 — 눌린 건 전해졌다는 표시로 화면만 살짝 흔들린다
 document.addEventListener('pointerdown', e => {
   if (S.phase === 'title' || skipBtn.contains(e.target)) return;
@@ -3303,7 +3309,11 @@ addEventListener('keydown', e => {
   if (e.repeat) return;
   if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar'){
     if (S.phase === 'title'){ e.preventDefault(); begin(); }
-    else if (overEl.classList.contains('on') && e.target !== saveBtn){ e.preventDefault(); audioOn(); sfx('keyUp'); resetGame(); }
+    else if (overEl.classList.contains('on')){
+      if (clipActions.contains(e.target)){
+        if (e.key !== 'Enter'){ e.preventDefault(); e.target.click(); }
+      } else { e.preventDefault(); audioOn(); sfx('keyUp'); resetGame(); }
+    }
     return;
   }
   const m = keyOf(e);
