@@ -176,11 +176,10 @@
     transition:transform .08s cubic-bezier(.2,1.9,.4,1), box-shadow .08s; }
   .keybtn:active .kc, .keybtn.down .kc { transform:translateY(8px); transition-duration:.03s;
     box-shadow:0 0 0 3px var(--ink), 0 2px 0 0 #c7a227, 0 2px 0 3px var(--ink), 0 5px 3px 1px rgba(38,25,15,.25); }
-  #titleBtns { display:flex; align-items:center; justify-content:center; gap:16px; }
-  #titleBtns #go .kc { min-width:clamp(120px, 42vw, 176px); }
+  #go .kc { min-width:clamp(120px, 42vw, 176px); }
   #skipScene { position:fixed; z-index:11; right:calc(18px + env(safe-area-inset-right)); bottom:calc(116px + env(safe-area-inset-bottom)); }
   #skipScene .kc { font-size:16px; }
-  /* 작은 키캡 (결과창 · 순위) — 종이색 */
+  /* 보조 키캡 */
   .keybtn.sm { padding-bottom:9px; }
   .keybtn.sm .kc { min-width:0; font-size:21px; padding:9px 20px 11px; border-radius:14px;
     box-shadow:0 0 0 3px var(--ink), 0 8px 0 0 #c7a227, 0 8px 0 3px var(--ink), 0 12px 6px 1px rgba(38,25,15,.25); }
@@ -201,29 +200,13 @@
   #score { font-family:"Bagel Fat One","Apple SD Gothic Neo","Malgun Gothic","Noto Sans CJK KR",sans-serif; font-weight:900; font-synthesis:none;
     font-size:62px; line-height:1.05; color:var(--ink); letter-spacing:-1px; font-variant-numeric:tabular-nums; }
   #score span { font-size:22px; color:#7b5e40; margin-left:3px; letter-spacing:0; }
-  #sub { margin-top:6px; min-height:20px; font-size:15px; font-weight:800; color:#6b5238; }
-  #nameRow { margin-top:14px; }
-  #nameIn { width:100%; padding:10px 12px; border:3px solid var(--ink); border-radius:12px; background:#fffdf6; outline:none;
-    font-family:inherit; font-size:18px; font-weight:800; color:var(--ink); text-align:center; -webkit-appearance:none; appearance:none; }
-  #nameIn::placeholder { color:#b19a7c; font-weight:700; }
-  #nameIn:focus { box-shadow:0 0 0 4px #f8dd57; }
-  #btns { margin-top:14px; display:flex; gap:9px; justify-content:center; flex-wrap:wrap; }
-  #save { display:none; }
-  /* 순위 */
-  #rankv { position:fixed; inset:0; z-index:16; display:none; align-items:center; justify-content:center; padding:20px; background:rgba(253,246,228,.72); }
-  #rankv.on { display:flex; }
-  #rankPanel { position:relative; width:min(340px, 88vw); max-height:76vh; overflow:auto; padding:18px 16px 12px; border-radius:20px; background:var(--paper);
-    box-shadow:0 0 0 3.5px var(--ink), 0 8px 0 0 var(--skirt), 0 8px 0 3.5px var(--ink), 0 14px 10px 2px rgba(38,25,15,.22); }
-  #rankTitle { font-family:"Bagel Fat One","Apple SD Gothic Neo","Malgun Gothic","Noto Sans CJK KR",sans-serif; font-weight:900; font-synthesis:none;
-    font-size:24px; color:var(--ink); text-align:center; margin-bottom:10px; }
-  #rankClose { position:absolute; top:8px; right:10px; width:36px; height:36px; border:none; background:transparent; cursor:pointer;
-    font-size:28px; font-weight:800; line-height:1; color:var(--ink); font-family:inherit; }
-  .rk { display:flex; align-items:baseline; gap:8px; padding:8px 6px; border-bottom:2px dashed #e4d4b2; font-size:16px; font-weight:700; color:#4a3725; }
-  .rk:last-child { border-bottom:none; }
-  .rk.me { background:#fbeaa0; border-radius:8px; }
-  .rk i { font-style:normal; width:30px; font-weight:900; color:var(--ink); }
-  .rk b { flex:1; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .rk u { text-decoration:none; font-weight:900; color:var(--ink); font-variant-numeric:tabular-nums; }
+  #scoreLabel, #sub { font-size:15px; font-weight:800; color:#6b5238; }
+  #scoreLabel { margin-bottom:4px; }
+  #sub { margin-top:6px; }
+  #sub:empty { display:none; }
+  #again { margin-top:16px; }
+  #save { display:none; position:absolute; right:calc(16px + env(safe-area-inset-right)); bottom:calc(12px + env(safe-area-inset-bottom)); }
+  #save .kc { font-size:15px; }
   #grain { position:fixed; inset:0; width:100%; height:100%; z-index:2; pointer-events:none; mix-blend-mode:multiply; opacity:.38; }
   @media (min-width:720px){
     #pads { grid-template-columns:repeat(2,150px) 90px repeat(2,150px); justify-content:center; }
@@ -233,7 +216,7 @@
   @media (max-height:560px){
     #titleScr { padding-top:max(9vh, env(safe-area-inset-top)); padding-bottom:max(4vh, calc(8px + env(safe-area-inset-bottom))); }
     #titleScr h1 { font-size:clamp(36px, 12vh, 64px); }
-    #titleBtns #go .kc { padding:8px 24px 10px; font-size:24px; }
+    #go .kc { padding:8px 24px 10px; font-size:24px; }
   }
   @media (max-height:620px){ #skipScene { bottom:calc(90px + env(safe-area-inset-bottom)); } }
   @media (max-height:620px){ .pad { height:70px; } .lg { font-size:25px; }
@@ -327,29 +310,16 @@
 <button id="skipScene" class="keybtn sm paper" type="button" hidden><span class="kc">건너뛰기</span></button>
 <div id="titleScr">
   <h1>지네 못 걷기</h1>
-  <div id="titleBtns">
-    <button id="go" class="keybtn" type="button"><span class="kc">시작</span></button>
-    <button id="rankBtn2" class="keybtn sm paper" type="button"><span class="kc">순위</span></button>
-  </div>
+  <button id="go" class="keybtn" type="button"><span class="kc">시작</span></button>
 </div>
 <div id="over">
   <div id="panel">
+    <div id="scoreLabel">이번 기록</div>
     <div id="score">0<span>m</span></div>
     <div id="sub"></div>
-    <div id="nameRow"><input id="nameIn" type="text" maxlength="8" placeholder="이름" autocomplete="off" enterkeyhint="done"></div>
-    <div id="btns">
-      <button id="again" class="keybtn sm" type="button"><span class="kc">다시</span></button>
-      <button id="save" class="keybtn sm paper" type="button"><span class="kc">저장</span></button>
-      <button id="rankBtn" class="keybtn sm paper" type="button"><span class="kc">순위</span></button>
-    </div>
+    <button id="again" class="keybtn sm" type="button"><span class="kc">다시</span></button>
   </div>
-</div>
-<div id="rankv">
-  <div id="rankPanel">
-    <button id="rankClose" type="button" aria-label="닫기">&times;</button>
-    <div id="rankTitle">순위</div>
-    <div id="rankList"></div>
-  </div>
+  <button id="save" class="keybtn sm paper" type="button"><span class="kc">영상 저장</span></button>
 </div>
 
 <div id="bubble"><div id="bubbleBody"><svg id="scrib" viewBox="0 0 100 40" preserveAspectRatio="none"></svg></div></div>
@@ -2101,7 +2071,7 @@ let best = 0;
 try { best = parseInt(localStorage.getItem('jine_best') || '0', 10) || 0; } catch (e) {}
 if (CAPTURE) best = parseInt(Q.get('best') || '0', 10) || 0;
 function renderBest(){
-  if (best > 0){ bestEl.innerHTML = '최고<b>' + best + 'm</b>'; bestEl.classList.remove('off'); }
+  if (best > 0){ bestEl.innerHTML = '내 최고<b>' + best + 'm</b>'; bestEl.classList.remove('off'); }
   else bestEl.classList.add('off');
 }
 renderBest();
@@ -2801,11 +2771,10 @@ function die(x){
   sfx('mcut'); MZ.cut = true;
   sfx('stomp', 1.0, true); sfx('splat');
   bubbleEl.classList.remove('warn');
-  // 기록 — 최고 기록이면 남기고, 이름이 있으면 순위에 바로 올린다
+  // 이 브라우저의 개인 최고 기록
   const d = Math.floor(S.dist);
   S.newBest = d > best;
   if (S.newBest){ best = d; if (!CAPTURE){ try { localStorage.setItem('jine_best', String(best)); } catch (e) {} } renderBest(); }
-  if (myName && !CAPTURE) rankSubmit(myName, d, () => {});
   clearFront(x - 6, x + 14);
   S.shake = 1.4;
   burstGoo(x, 0.1);
@@ -3067,73 +3036,6 @@ function placeCentipede(x){
   for (const L of cent.legs){ L.init = false; L.sw = null; }
 }
 
-// ───────────────────────── 순위 — 앱스스크립트 웹앱 (원래 게임과 같은 주소 · 같은 기록)
-const RANK_URL = 'https://script.google.com/macros/s/AKfycbzKmIYdOCYXNwXbNzvZWR2mQZk59Hhbpk7le-86VGqwzrgJZYqwGegYmRHcKhQ59fVV/exec';
-const NET = !CAPTURE;
-const overEl = document.getElementById('over'), panelEl = document.getElementById('panel'), saveBtn = document.getElementById('save');
-const nameIn = document.getElementById('nameIn'), rankvEl = document.getElementById('rankv'), rankList = document.getElementById('rankList');
-let myName = '';
-try { myName = localStorage.getItem('jine_name') || ''; } catch (e) {}
-nameIn.value = myName;
-// 같은 사람인지는 이름이 아니라 이 id 로 판정한다 (동명이인이 서로 기록을 덮어쓰지 않게)
-let myId = '';
-try { myId = localStorage.getItem('jine_id') || ''; } catch (e) {}
-if (!myId){
-  myId = (Date.now().toString(36) + Math.random().toString(36).slice(2)).replace(/[^a-z0-9]/g, '').slice(0, 12);
-  try { localStorage.setItem('jine_id', myId); } catch (e) {}
-}
-function rankFetch(cb){
-  if (!NET || !RANK_URL){ cb(null); return; }
-  const fn = 'jineCb' + Date.now().toString(36);
-  const sc = document.createElement('script');
-  let done = false;
-  const cleanup = () => { try { delete window[fn]; } catch (e) { window[fn] = undefined; } if (sc.parentNode) sc.parentNode.removeChild(sc); };
-  window[fn] = data => { done = true; cleanup(); cb(data); };
-  sc.onerror = () => { if (!done){ done = true; cleanup(); cb(null); } };
-  sc.src = RANK_URL + (RANK_URL.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + fn + '&t=' + Date.now();
-  document.head.appendChild(sc);
-  setTimeout(() => { if (!done){ done = true; cleanup(); cb(null); } }, 8000);
-}
-function rankSubmit(name, dist, done){
-  if (!NET || !RANK_URL || !name || !(dist > 0)){ done(); return; }
-  const body = JSON.stringify({ id:myId, name, dist });
-  let tries = 0;
-  const go = () => {
-    try {
-      fetch(RANK_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body })
-        .then(() => done())
-        .catch(() => { if (++tries < 2) setTimeout(go, 900); else done(); });   // 앱스스크립트는 응답을 못 읽는 경우가 있어서, 네트워크 오류만 한 번 더
-    } catch (e) { done(); }
-  };
-  go();
-}
-function rankRender(list){
-  rankList.innerHTML = '';
-  if (!list || !list.length){
-    const e0 = document.createElement('div'); e0.className = 'rk'; e0.textContent = '—'; rankList.appendChild(e0);
-    return;
-  }
-  let prev = null, r = 0;
-  list.forEach((it, i) => {
-    if (it.d !== prev){ r = i + 1; prev = it.d; }   // 동점은 공동 순위
-    const row = document.createElement('div');
-    row.className = 'rk' + (myName && it.n === myName ? ' me' : '');
-    const a = document.createElement('i'); a.textContent = r;
-    const b = document.createElement('b'); b.textContent = it.n;
-    const c = document.createElement('u'); c.textContent = it.d + 'm';
-    row.append(a, b, c);
-    rankList.appendChild(row);
-  });
-}
-function openRank(withScore){
-  const nm = (nameIn.value || '').replace(/\s+/g, ' ').trim().slice(0, 8);
-  if (nm && nm !== myName){ myName = nm; try { localStorage.setItem('jine_name', myName); } catch (e) {} }
-  rankvEl.classList.add('on');
-  rankList.innerHTML = '<div class="rk">…</div>';
-  const d = withScore ? Math.floor(S.dist) : 0;
-  rankSubmit(myName, d, () => rankFetch(list => rankRender(list)));
-}
-
 // ───────────────────────── 밟히는 장면 녹화 — 소가 16m 안으로 들어오면 돌리기 시작해서 교훈 컷이 끝날 때까지
 // 3D 화면 위에 만화 칸 · 내레이션 글자를 얹어 한 화면으로 담고, 소리(음악·효과음)도 같이 담는다
 const REC = { r:null, start:0, mime:'', blob:null, url:null, cv:null, cx:null, dest:null, w:0, h:0, game:0, fs:0 };
@@ -3252,16 +3154,17 @@ function saveClip(){
 }
 
 // ───────────────────────── 결과창 · 다시
+const overEl = document.getElementById('over'), panelEl = document.getElementById('panel'), saveBtn = document.getElementById('save');
 function showOver(){
   S.overShown = true;
   const d = Math.floor(S.dist);
+  document.getElementById('scoreLabel').textContent = S.newBest ? '신기록!' : '이번 기록';
   document.getElementById('score').innerHTML = d + '<span>m</span>';
   const parts = [];
+  if (!S.newBest) parts.push('내 최고 ' + best + 'm');
   if (S.falls) parts.push('넘어짐 ' + S.falls + '회');
-  if (best > 0 && !S.newBest) parts.push('최고 ' + best + 'm');
   document.getElementById('sub').textContent = parts.join(' · ');
   panelEl.classList.toggle('newbest', S.newBest);
-  nameIn.value = myName;
   saveBtn.style.display = 'none';
   overEl.classList.add('on');
   recEnd(true);
@@ -3269,7 +3172,7 @@ function showOver(){
 // 한 판을 처음부터 — 인트로부터 다시 (소리 · 악기는 그대로 둔다)
 function resetGame(){
   REC.game++; recEnd(false); REC.blob = null;
-  overEl.classList.remove('on'); rankvEl.classList.remove('on'); panelEl.classList.remove('newbest');
+  overEl.classList.remove('on'); panelEl.classList.remove('newbest');
   const clock = S.clock;
   Object.assign(S, freshState());
   S.clock = clock;
@@ -3347,7 +3250,6 @@ if (CAPTURE || Q.has('dev')) window.LOOK = {
   press(g){ return press(g); },
   reset(){ resetGame(); },
   begin(){ begin(); },
-  rank(list){ rankvEl.classList.add('on'); rankRender(list); },
   audio(){ return { ctx:actx ? actx.state : null, ready:actx ? musicReady(actx) : false, pre:PRE ? musicReady(PRE) : null, sr:actx ? actx.sampleRate : 0 }; },
   rec(){ return { on:!!REC.r, blob:REC.blob ? REC.blob.size : 0, mime:REC.mime, ok:recSupported(), w:REC.w, h:REC.h, state:REC.r ? REC.r.state : '' }; },
   probeDeath(){
@@ -3367,13 +3269,8 @@ goBtn.addEventListener('pointerdown', e => { e.preventDefault(); goBtn.classList
 goBtn.addEventListener('pointerup', () => { goBtn.classList.remove('down'); begin(); });
 goBtn.addEventListener('pointerleave', () => goBtn.classList.remove('down'));
 goBtn.addEventListener('click', begin);
-document.getElementById('rankBtn2').addEventListener('click', () => { audioOn(); sfx('keyUp'); openRank(false); });
-document.getElementById('rankBtn').addEventListener('click', () => { sfx('keyUp'); openRank(true); });
-document.getElementById('rankClose').addEventListener('click', () => rankvEl.classList.remove('on'));
-rankvEl.addEventListener('click', e => { if (e.target === rankvEl) rankvEl.classList.remove('on'); });
 document.getElementById('again').addEventListener('click', () => { audioOn(); sfx('keyUp'); resetGame(); });
 saveBtn.addEventListener('click', () => { sfx('keyUp'); saveClip(); });
-nameIn.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') nameIn.blur(); });
 // 컷신 중엔 아무 데나 눌러도 넘어가지 않는다 — 눌린 건 전해졌다는 표시로 화면만 살짝 흔들린다
 document.addEventListener('pointerdown', e => {
   if (S.phase === 'title' || skipBtn.contains(e.target)) return;
@@ -3396,11 +3293,10 @@ const KC = { Digit1:0, Digit2:1, Digit3:2, Digit4:3, Numpad1:0, Numpad2:1, Numpa
 const KM = { '1':0, '2':1, '3':2, '4':3, 'a':0, 's':1, 'd':2, 'f':3, 'ㅁ':0, 'ㄴ':1, 'ㅇ':2, 'ㄹ':3 };
 const keyOf = e => KC[e.code] ?? KM[(e.key || '').toLowerCase()];
 addEventListener('keydown', e => {
-  if (e.repeat || e.target === nameIn || document.activeElement === nameIn) return;
-  if (rankvEl.classList.contains('on')){ if (e.key === 'Escape') rankvEl.classList.remove('on'); return; }
+  if (e.repeat) return;
   if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar'){
     if (S.phase === 'title'){ e.preventDefault(); begin(); }
-    else if (overEl.classList.contains('on')){ e.preventDefault(); audioOn(); sfx('keyUp'); resetGame(); }
+    else if (overEl.classList.contains('on') && e.target !== saveBtn){ e.preventDefault(); audioOn(); sfx('keyUp'); resetGame(); }
     return;
   }
   const m = keyOf(e);
